@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.get('dashboard', 'Dashboard') }} - Ona Edge{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 600;">
+    {{ t.get('todays_summary', "Today's Summary") }}
+</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_today }}</div>
+        <div class="stat-label">{{ t.get('studies', 'Studies') }}</div>
+    </div>
+    <div class="stat-card high">
+        <div class="stat-value">{{ stats.high }}</div>
+        <div class="stat-label">{{ t.get('high_risk', 'HIGH') }}</div>
+    </div>
+    <div class="stat-card medium">
+        <div class="stat-value">{{ stats.medium }}</div>
+        <div class="stat-label">{{ t.get('medium_risk', 'MEDIUM') }}</div>
+    </div>
+    <div class="stat-card low">
+        <div class="stat-value">{{ stats.low }}</div>
+        <div class="stat-label">{{ t.get('low_risk', 'LOW') }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-label">{{ t.get('pending', 'Pending') }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.errors }}</div>
+        <div class="stat-label">{{ t.get('errors', 'Errors') }}</div>
+    </div>
+</div>
+
+{% if stats.sync_pending > 0 %}
+<div class="alert alert-warning" style="margin-top: 1.5rem;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span><strong>{{ t.get('sync_pending', 'Sync Pending') }}:</strong> {{ stats.sync_pending }} {{ t.get('items_waiting', 'items waiting to sync to cloud') }}</span>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">{{ t.get('needs_attention', 'Needs Attention') }}</div>
+
+    {% if high_risk_results %}
+    <ul class="result-list">
+        {% for result in high_risk_results %}
+        <li class="result-item">
+            <span class="risk-badge high">
+                <span style="display: inline-block; width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+                {{ t.get('high_risk', 'HIGH') }}
+            </span>
+            <div class="result-info">
+                <div class="result-id">{{ result.study_id }}</div>
+                <div class="result-time">{{ result.created_at.strftime('%H:%M') }}</div>
+                <div class="result-explanation">{{ result.explanation }}</div>
+            </div>
+            <a href="/result/{{ result.id }}?lang={{ lang }}" class="btn btn-primary">
+                {{ t.get('view_result', 'View Result') }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color: var(--text-muted); padding: 2rem; text-align: center;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 1rem; opacity: 0.5;">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <br>
+        {{ t.get('no_high_risk', 'No high-risk studies requiring attention') }}
+    </p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">{{ t.get('recent_results', 'Recent Results') }}</div>
+
+    {% if other_results %}
+    <ul class="result-list">
+        {% for result in other_results %}
+        <li class="result-item">
+            <span class="risk-badge {{ result.risk_bucket|lower|replace('_', '-') }}">
+                <span style="display: inline-block; width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+                {% if result.risk_bucket == 'LOW' %}{{ t.get('low_risk', 'LOW') }}
+                {% elif result.risk_bucket == 'MEDIUM' %}{{ t.get('medium_risk', 'MEDIUM') }}
+                {% elif result.risk_bucket == 'NOT_CONFIDENT' %}{{ t.get('not_confident', 'REVIEW') }}
+                {% else %}{{ result.risk_bucket }}{% endif %}
+            </span>
+            <div class="result-info">
+                <div class="result-id">{{ result.study_id }}</div>
+                <div class="result-time">{{ result.created_at.strftime('%H:%M') }}</div>
+            </div>
+            <a href="/result/{{ result.id }}?lang={{ lang }}" class="btn btn-outline">
+                {{ t.get('view', 'View') }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color: var(--text-muted); padding: 2rem; text-align: center;">
+        {{ t.get('no_results', 'No results yet. Studies will appear here after processing.') }}
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

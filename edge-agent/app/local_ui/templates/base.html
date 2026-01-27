@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ona Edge{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --bg-primary: #0A0E1A;
+            --bg-secondary: #0F172A;
+            --bg-card: #1A2332;
+            --bg-card-hover: #1E293B;
+            --primary: #0D9488;
+            --primary-light: #14B8A6;
+            --accent: #06B6D4;
+            --accent-glow: #67E8F9;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --border: #334155;
+            --success: #22C55E;
+            --success-glow: rgba(34, 197, 94, 0.3);
+            --warning: #EAB308;
+            --warning-glow: rgba(234, 179, 8, 0.3);
+            --danger: #EF4444;
+            --danger-glow: rgba(239, 68, 68, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Gradient background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(13, 148, 136, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+        }
+
+        .logo-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: 1px;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success-glow);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger-glow);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .lang-select {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .lang-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: var(--bg-secondary);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .nav-links a.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(13, 148, 136, 0.1);
+        }
+
+        .card-header {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, var(--accent) 0%, var(--primary) 100%);
+            border-radius: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-glow) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card.high::before { background: var(--danger); }
+        .stat-card.high .stat-value {
+            background: linear-gradient(135deg, #FCA5A5 0%, var(--danger) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-card.medium::before { background: var(--warning); }
+        .stat-card.medium .stat-value {
+            background: linear-gradient(135deg, #FDE047 0%, var(--warning) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-card.low::before { background: var(--success); }
+        .stat-card.low .stat-value {
+            background: linear-gradient(135deg, #86EFAC 0%, var(--success) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .risk-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: #FCA5A5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            box-shadow: 0 0 15px var(--danger-glow);
+        }
+
+        .risk-badge.medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: #FDE047;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            box-shadow: 0 0 15px var(--warning-glow);
+        }
+
+        .risk-badge.low {
+            background: rgba(34, 197, 94, 0.15);
+            color: #86EFAC;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            box-shadow: 0 0 15px var(--success-glow);
+        }
+
+        .risk-badge.not-confident {
+            background: rgba(100, 116, 139, 0.15);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .result-list {
+            list-style: none;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item:hover {
+            background: var(--bg-card-hover);
+            margin: 0 -0.5rem;
+            padding-left: 1.75rem;
+            padding-right: 1.75rem;
+            border-radius: 8px;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-id {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .result-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .result-explanation {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            color: #FDE047;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="3" fill="white"/>
+                    <path d="M12 5C7 5 2.73 8.11 1 12.5C2.73 16.89 7 20 12 20C17 20 21.27 16.89 23 12.5C21.27 8.11 17 5 12 5Z" stroke="white" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+            <div>
+                <h1>ONA</h1>
+                <div class="logo-subtitle">{{ t.get('edge_subtitle', 'Edge AI Diagnostics') }}</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-indicator">
+                <div class="status-dot" id="status-dot"></div>
+                <span class="status-text" id="status-text">{{ t.get('system_online', 'System Online') }}</span>
+            </div>
+            <select class="lang-select" onchange="window.location.href='?lang=' + this.value">
+                <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                <option value="sw" {% if lang == 'sw' %}selected{% endif %}>Kiswahili</option>
+                <option value="so" {% if lang == 'so' %}selected{% endif %}>Soomaali</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="container">
+        <nav class="nav-links">
+            <a href="/?lang={{ lang }}" {% if request.url.path == '/' %}class="active"{% endif %}>
+                {{ t.get('dashboard', 'Dashboard') }}
+            </a>
+            <a href="/studies?lang={{ lang }}" {% if request.url.path == '/studies' %}class="active"{% endif %}>
+                {{ t.get('all_studies', 'All Studies') }}
+            </a>
+            <a href="/admin?lang={{ lang }}" {% if request.url.path == '/admin' %}class="active"{% endif %}>
+                {{ t.get('admin', 'Admin') }}
+            </a>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        async function checkStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                document.getElementById('status-dot').classList.remove('offline');
+                document.getElementById('status-text').textContent = '{{ t.get("system_online", "System Online") }}';
+            } catch (e) {
+                document.getElementById('status-dot').classList.add('offline');
+                document.getElementById('status-text').textContent = '{{ t.get("system_offline", "Offline") }}';
+            }
+        }
+        setInterval(checkStatus, 30000);
+    </script>
+</body>
+</html>

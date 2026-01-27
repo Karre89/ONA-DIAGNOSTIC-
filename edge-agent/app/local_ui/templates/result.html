@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ result.study_id }} - Ona Edge{% endblock %}
+
+{% block content %}
+<a href="/?lang={{ lang }}" style="color: var(--accent); text-decoration: none; margin-bottom: 1rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    {{ t.get('back_to_dashboard', 'Back to Dashboard') }}
+</a>
+
+<div style="display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0;">
+    <h2 style="font-size: 1.5rem; font-weight: 600; font-family: 'Monaco', monospace;">{{ result.study_id }}</h2>
+    <span class="risk-badge {{ result.risk_bucket|lower|replace('_', '-') }}" style="font-size: 0.85rem;">
+        {% if result.risk_bucket == 'HIGH' %}{{ t.get('high_risk', 'HIGH RISK') }}
+        {% elif result.risk_bucket == 'MEDIUM' %}{{ t.get('medium_risk', 'MEDIUM') }}
+        {% elif result.risk_bucket == 'LOW' %}{{ t.get('low_risk', 'LOW') }}
+        {% else %}{{ t.get('not_confident', 'REVIEW NEEDED') }}{% endif %}
+    </span>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Chest X-ray Image -->
+    <div class="card" style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%); overflow: hidden; padding: 0;">
+        <div id="xray-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+            <img id="xray-image" src="/images/study/{{ result.study_id }}" alt="Chest X-ray" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" onload="this.style.display='block'; document.getElementById('xray-placeholder').style.display='none';" onerror="document.getElementById('xray-placeholder').style.display='flex';">
+            <div id="xray-placeholder" style="text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity: 0.5;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">{{ t.get('chest_xray', 'Chest X-ray') }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Attention Heatmap -->
+    <div class="card" style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(13, 148, 136, 0.1) 100%); overflow: hidden; padding: 0;">
+        <div id="heatmap-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+            <img id="heatmap-image" src="/images/heatmap/{{ result.study_id }}" alt="AI Attention Heatmap" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" onload="this.style.display='block'; document.getElementById('heatmap-placeholder').style.display='none';" onerror="document.getElementById('heatmap-placeholder').style.display='flex';">
+            <div id="heatmap-placeholder" style="text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1" style="opacity: 0.7;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <path d="M3 9h18M9 21V9" stroke-opacity="0.5"></path>
+                    <circle cx="15" cy="15" r="3" fill="rgba(6, 182, 212, 0.3)" stroke="var(--accent)"></circle>
+                </svg>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">{{ t.get('heatmap_overlay', 'AI Attention Heatmap') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Assessment Card -->
+<div class="card" style="border-left: 4px solid {% if result.risk_bucket == 'HIGH' %}var(--danger){% elif result.risk_bucket == 'MEDIUM' %}var(--warning){% else %}var(--success){% endif %};">
+    <div class="card-header">{{ t.get('ai_assessment', 'AI Assessment') }}</div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ t.get('tb_score', 'TB Score') }}</div>
+            <div style="font-size: 2rem; font-weight: 700; color: {% if scores.tb_score >= 0.6 %}var(--danger){% elif scores.tb_score >= 0.3 %}var(--warning){% else %}var(--success){% endif %};">
+                {{ "%.0f"|format(scores.tb_score * 100) }}%
+            </div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ t.get('quality_score', 'Image Quality') }}</div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--accent);">
+                {{ "%.0f"|format(scores.quality_score * 100) }}%
+            </div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ t.get('processing_time', 'Processing') }}</div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--primary-light);">
+                {{ result.inference_time_ms }}<span style="font-size: 1rem;">ms</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="background: var(--bg-secondary); padding: 1rem 1.25rem; border-radius: 12px; border-left: 3px solid var(--accent);">
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ t.get('findings', 'Findings') }}</div>
+        <div style="color: var(--text-primary);">{{ result.explanation }}</div>
+    </div>
+</div>
+
+<!-- Required Actions (for HIGH risk) -->
+{% if result.risk_bucket == 'HIGH' %}
+<div class="card" style="border-left: 4px solid var(--danger);">
+    <div class="card-header">{{ t.get('required_actions', 'Required Actions') }}</div>
+
+    <form action="/workflow/{{ result.study_id }}" method="post">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <input type="checkbox" name="sputum_collected" value="true" {% if workflow and workflow.sputum_collected %}checked{% endif %} style="width: 20px; height: 20px; accent-color: var(--primary);">
+                <div>
+                    <div style="font-weight: 500;">{{ t.get('collect_sputum', 'Collect sputum sample immediately') }}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">{{ t.get('collect_sputum_desc', 'Priority action for suspected TB cases') }}</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" name="genexpert_done" value="true" {% if workflow and workflow.genexpert_done %}checked{% endif %} style="width: 20px; height: 20px; accent-color: var(--primary);">
+                <div>
+                    <div style="font-weight: 500;">{{ t.get('genexpert', 'Send for GeneXpert testing') }}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">{{ t.get('genexpert_desc', 'If available at facility') }}</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" name="patient_referred" value="true" {% if workflow and workflow.patient_referred %}checked{% endif %} style="width: 20px; height: 20px; accent-color: var(--primary);">
+                <div>
+                    <div style="font-weight: 500;">{{ t.get('refer_patient', 'Refer patient if needed') }}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">{{ t.get('refer_patient_desc', 'To TB treatment center') }}</div>
+                </div>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem;">
+            {{ t.get('save_actions', 'Save Actions') }}
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Clinician Feedback -->
+<div class="card">
+    <div class="card-header">{{ t.get('your_assessment', 'Your Clinical Assessment') }}</div>
+
+    <form action="/feedback/{{ result.study_id }}" method="post">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+            <label style="display: flex; flex-direction: column; align-items: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--success)'" onmouseout="this.style.borderColor='transparent'">
+                <input type="radio" name="response" value="AGREE" {% if feedback and feedback.response == 'AGREE' %}checked{% endif %} required style="display: none;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                </svg>
+                <span style="margin-top: 0.5rem; font-weight: 500;">{{ t.get('agree', 'Agree') }}</span>
+            </label>
+            <label style="display: flex; flex-direction: column; align-items: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--danger)'" onmouseout="this.style.borderColor='transparent'">
+                <input type="radio" name="response" value="DISAGREE" {% if feedback and feedback.response == 'DISAGREE' %}checked{% endif %} style="display: none;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2">
+                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                </svg>
+                <span style="margin-top: 0.5rem; font-weight: 500;">{{ t.get('disagree', 'Disagree') }}</span>
+            </label>
+            <label style="display: flex; flex-direction: column; align-items: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--warning)'" onmouseout="this.style.borderColor='transparent'">
+                <input type="radio" name="response" value="UNSURE" {% if feedback and feedback.response == 'UNSURE' %}checked{% endif %} style="display: none;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span style="margin-top: 0.5rem; font-weight: 500;">{{ t.get('unsure', 'Unsure') }}</span>
+            </label>
+        </div>
+
+        <textarea name="reason" placeholder="{{ t.get('reason_placeholder', 'Optional: Provide clinical reasoning or notes...') }}" style="width: 100%; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); min-height: 100px; resize: vertical; font-family: inherit;">{% if feedback %}{{ feedback.reason }}{% endif %}</textarea>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+            {{ t.get('submit_feedback', 'Submit Assessment') }}
+        </button>
+    </form>
+</div>
+
+<!-- Metadata -->
+<div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 2rem; flex-wrap: wrap;">
+    <span><strong>{{ t.get('model', 'Model') }}:</strong> {{ result.model_version }}</span>
+    <span><strong>{{ t.get('processed', 'Processed') }}:</strong> {{ result.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+    {% if result.synced_at %}
+    <span style="color: var(--success);"><strong>{{ t.get('synced', 'Synced') }}:</strong> {{ result.synced_at.strftime('%H:%M') }}</span>
+    {% else %}
+    <span style="color: var(--warning);"><strong>{{ t.get('sync_status', 'Sync') }}:</strong> {{ t.get('pending', 'Pending') }}</span>
+    {% endif %}
+</div>
+{% endblock %}

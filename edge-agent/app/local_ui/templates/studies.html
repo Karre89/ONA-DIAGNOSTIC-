@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.get('all_studies', 'All Studies') }} - Ona Edge{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 600;">
+        {{ t.get('all_studies', 'All Studies') }}
+        <span style="font-size: 1rem; color: var(--text-muted); font-weight: 400;">({{ total }})</span>
+    </h2>
+</div>
+
+<div class="card" style="overflow: hidden;">
+    {% if studies %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <th style="text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.get('study_id', 'Study ID') }}</th>
+                    <th style="text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.get('modality', 'Type') }}</th>
+                    <th style="text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.get('status', 'Status') }}</th>
+                    <th style="text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.get('risk', 'Risk') }}</th>
+                    <th style="text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.get('received', 'Received') }}</th>
+                    <th style="text-align: right; padding: 1rem;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for study in studies %}
+                <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 1rem;">
+                        <span style="font-weight: 500; font-family: 'Monaco', monospace; color: var(--text-primary);">{{ study.id }}</span>
+                    </td>
+                    <td style="padding: 1rem;">
+                        <span style="padding: 0.25rem 0.75rem; background: var(--bg-secondary); border-radius: 6px; font-size: 0.8rem; color: var(--accent);">
+                            {{ study.modality or 'CXR' }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem;">
+                        <span style="padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem;
+                            {% if study.status == 'READY' %}background: rgba(34, 197, 94, 0.15); color: var(--success);
+                            {% elif study.status == 'ERROR' %}background: rgba(239, 68, 68, 0.15); color: var(--danger);
+                            {% elif study.status == 'PROCESSING' %}background: rgba(6, 182, 212, 0.15); color: var(--accent);
+                            {% else %}background: var(--bg-secondary); color: var(--text-muted);{% endif %}">
+                            {{ study.status }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if study.id in study_results %}
+                        <span class="risk-badge {{ study_results[study.id].risk_bucket|lower|replace('_', '-') }}">
+                            {{ study_results[study.id].risk_bucket }}
+                        </span>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                        {{ study.received_at.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+                    <td style="padding: 1rem; text-align: right;">
+                        {% if study.id in study_results %}
+                        <a href="/result/{{ study_results[study.id].id }}?lang={{ lang }}" class="btn btn-outline" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
+                            {{ t.get('view', 'View') }}
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if total_pages > 1 %}
+    <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; padding: 1.5rem; border-top: 1px solid var(--border);">
+        {% if page > 1 %}
+        <a href="/studies?page={{ page - 1 }}&lang={{ lang }}" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </a>
+        {% endif %}
+
+        <span style="color: var(--text-secondary);">
+            {{ t.get('page', 'Page') }} {{ page }} {{ t.get('of', 'of') }} {{ total_pages }}
+        </span>
+
+        {% if page < total_pages %}
+        <a href="/studies?page={{ page + 1 }}&lang={{ lang }}" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="padding: 4rem 2rem; text-align: center;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1" style="margin-bottom: 1rem; opacity: 0.5;">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+        <p style="color: var(--text-muted);">{{ t.get('no_studies', 'No studies yet. Images will appear here after ingestion.') }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
