@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Model
     model_dir: str = os.getenv("MODEL_DIR", "/var/imaging-edge/models")
-    default_model_version: str = os.getenv("DEFAULT_MODEL_VERSION", "ona-cxr-tb-v1.0")
+    default_model_version: str = os.getenv("DEFAULT_MODEL_VERSION", "v2.0")
 
     # DICOM SCP
     dicom_scp_port: int = int(os.getenv("DICOM_SCP_PORT", "104"))

@@ -55,6 +55,7 @@ services:
       - "104:104"
     volumes:
       - edge_data:/var/imaging-edge
+      - ../edge-agent/data/models:/var/imaging-edge/models
     depends_on:
       cloud:
         condition: service_healthy

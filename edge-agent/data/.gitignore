@@ -1,0 +1,16 @@
+# Exclude large model files
+models/*.onnx
+models/*.onnx.data
+
+# Include manifest files
+!models/*.manifest.json
+
+# Exclude processed data
+processed/
+results/
+heatmaps/
+incoming/
+samples/
+
+# Keep directory structure
+!.gitkeep

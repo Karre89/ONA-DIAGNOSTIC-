@@ -17,6 +17,8 @@ dependencies = [
     "numpy>=1.24.0",
     "pydicom>=2.4.0",
     "pynetdicom>=2.0.0",
+    # AI Inference
+    "onnxruntime>=1.16.0",  # For running ONNX models (CPU inference)
 ]
 
 [project.optional-dependencies]
