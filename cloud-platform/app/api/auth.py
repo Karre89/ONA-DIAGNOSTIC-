@@ -228,3 +228,45 @@ def get_cloud_stats(
         "devices_online_percent": round((online_devices / max(total_devices, 1)) * 100, 1),
         "organizations": orgs
     }
+
+
+@router.get("/sites")
+def get_sites(db: Session = Depends(get_db)):
+    """Get all sites (public for now)"""
+    from app.models.models import Device
+
+    sites = db.query(Site).all()
+    result = []
+    for site in sites:
+        tenant = db.query(Tenant).filter(Tenant.id == site.tenant_id).first()
+        device_count = db.query(Device).filter(Device.site_id == site.id).count()
+        result.append({
+            "id": str(site.id),
+            "name": site.name,
+            "site_code": site.site_code,
+            "country": site.country,
+            "organization": tenant.name if tenant else "Unknown",
+            "devices": device_count
+        })
+    return result
+
+
+@router.get("/devices")
+def get_devices(db: Session = Depends(get_db)):
+    """Get all devices (public for now)"""
+    from app.models.models import Device
+
+    devices = db.query(Device).all()
+    result = []
+    for device in devices:
+        tenant = db.query(Tenant).filter(Tenant.id == device.tenant_id).first()
+        site = db.query(Site).filter(Site.id == device.site_id).first()
+        result.append({
+            "id": str(device.id),
+            "name": device.device_name,
+            "site": site.name if site else "Unknown",
+            "organization": tenant.name if tenant else "Unknown",
+            "status": device.status,
+            "last_heartbeat": device.last_heartbeat.isoformat() if device.last_heartbeat else None
+        })
+    return result

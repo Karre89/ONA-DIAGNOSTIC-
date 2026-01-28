@@ -160,7 +160,31 @@ class ApiClient {
 
   // Seed data (for testing)
   async seedData() {
-    return this.request('/seed', { method: 'POST' });
+    return this.request('/seed', { method: 'POST', body: JSON.stringify({}) });
+  }
+
+  // Sites endpoints
+  async getSites() {
+    return this.request<Array<{
+      id: string;
+      name: string;
+      site_code: string;
+      country: string;
+      organization: string;
+      devices: number;
+    }>>('/auth/sites');
+  }
+
+  // Devices endpoints
+  async getDevices() {
+    return this.request<Array<{
+      id: string;
+      name: string;
+      site: string;
+      organization: string;
+      status: string;
+      last_heartbeat: string | null;
+    }>>('/auth/devices');
   }
 }
 

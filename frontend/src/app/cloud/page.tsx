@@ -23,13 +23,13 @@ import { useRouter } from 'next/navigation'
 import { api, CloudStats } from '@/lib/api'
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: 'Overview', active: true },
-  { icon: Building2, label: 'Organizations' },
-  { icon: Map, label: 'Sites' },
-  { icon: HardDrive, label: 'Devices' },
-  { icon: BarChart3, label: 'Analytics' },
-  { icon: Users, label: 'Users' },
-  { icon: Settings, label: 'Settings' },
+  { icon: LayoutDashboard, label: 'Overview', href: '/cloud', active: true },
+  { icon: Building2, label: 'Organizations', href: '/cloud/organizations' },
+  { icon: Map, label: 'Sites', href: '/cloud/sites' },
+  { icon: HardDrive, label: 'Devices', href: '/cloud/devices' },
+  { icon: BarChart3, label: 'Analytics', href: '/cloud' },
+  { icon: Users, label: 'Users', href: '/cloud' },
+  { icon: Settings, label: 'Settings', href: '/cloud' },
 ]
 
 export default function CloudDashboardPage() {
@@ -97,8 +97,9 @@ export default function CloudDashboardPage() {
 
         <nav className="p-4 space-y-2">
           {sidebarItems.map((item) => (
-            <button
+            <Link
               key={item.label}
+              href={item.href}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                 item.active
                   ? 'bg-ona-primary/20 text-ona-primary'
@@ -107,7 +108,7 @@ export default function CloudDashboardPage() {
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {sidebarOpen && <span>{item.label}</span>}
-            </button>
+            </Link>
           ))}
         </nav>
 
