@@ -127,3 +127,18 @@ class Incident(Base):
     assigned_to = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(Text, unique=True, nullable=False)
+    password_hash = Column(Text, nullable=False)
+    full_name = Column(Text, nullable=False)
+    role = Column(Text, default="clinic_user")  # admin, clinic_user, viewer
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime)

@@ -2,21 +2,48 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Activity, Shield, Zap } from 'lucide-react'
+import { Eye, EyeOff, Activity, Shield, Zap, UserPlus } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { api } from '@/lib/api'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [error, setError] = useState('')
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate login - replace with actual auth
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    window.location.href = '/dashboard'
+    setError('')
+
+    try {
+      if (isRegister) {
+        await api.register(email, password, fullName)
+      } else {
+        await api.login(email, password)
+      }
+
+      // Get user from localStorage to check role
+      const userStr = localStorage.getItem('user')
+      const user = userStr ? JSON.parse(userStr) : null
+
+      // Redirect based on role
+      if (user?.role === 'admin') {
+        router.push('/cloud')
+      } else {
+        router.push('/dashboard')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -67,18 +94,48 @@ export default function LoginPage() {
             <p className="text-ona-primary font-medium">AI-Powered TB Screening</p>
           </motion.div>
 
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          {/* Login/Register Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {isRegister && (
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+              >
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="input-glass"
+                  placeholder="Enter your full name"
+                  required={isRegister}
+                />
+              </motion.div>
+            )}
+
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email or Username
+                Email
               </label>
               <input
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-glass"
@@ -128,14 +185,28 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Signing in...
+                    {isRegister ? 'Creating account...' : 'Signing in...'}
                   </>
                 ) : (
-                  'Sign In'
+                  isRegister ? 'Create Account' : 'Sign In'
                 )}
               </button>
             </motion.div>
           </form>
+
+          {/* Toggle Register/Login */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister)
+                setError('')
+              }}
+              className="text-ona-primary hover:text-ona-accent transition-colors text-sm"
+            >
+              {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+            </button>
+          </div>
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-6">
