@@ -110,10 +110,10 @@ export default function DashboardPage() {
   }
 
   const statsDisplay = [
-    { label: 'Total Scans', value: stats?.total_scans || 0, icon: Scan, trend: null },
-    { label: 'High Risk Cases', value: stats?.high_risk || 0, icon: AlertTriangle, color: 'text-red-400' },
-    { label: 'Pending Review', value: stats?.pending_review || 0, icon: Clock, color: 'text-yellow-400' },
-    { label: 'Low Risk', value: stats?.low_risk || 0, icon: CheckCircle, color: 'text-green-400' },
+    { label: 'Total Scans', value: stats?.total_scans || 0, icon: Scan, color: 'text-ona-primary', trend: null as string | null },
+    { label: 'High Risk Cases', value: stats?.high_risk || 0, icon: AlertTriangle, color: 'text-red-400', trend: null as string | null },
+    { label: 'Pending Review', value: stats?.pending_review || 0, icon: Clock, color: 'text-yellow-400', trend: null as string | null },
+    { label: 'Low Risk', value: stats?.low_risk || 0, icon: CheckCircle, color: 'text-green-400', trend: null as string | null },
   ]
 
   return (
@@ -208,7 +208,7 @@ export default function DashboardPage() {
                 <div className={`p-2 rounded-xl bg-ona-primary/10 ${stat.color || 'text-ona-primary'}`}>
                   <stat.icon className="w-5 h-5" />
                 </div>
-                {stat.trend && (
+                {'trend' in stat && stat.trend && (
                   <span className="flex items-center gap-1 text-green-400 text-sm">
                     <TrendingUp className="w-4 h-4" />
                     {stat.trend}
