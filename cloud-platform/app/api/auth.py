@@ -156,18 +156,12 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @router.get("/dashboard-stats")
 def get_dashboard_stats(
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get dashboard statistics for the current user"""
+    """Get dashboard statistics (public for now)"""
 
     # Get total scans
     query = db.query(InferenceResult)
-    if current_user.tenant_id:
-        query = query.filter(InferenceResult.tenant_id == current_user.tenant_id)
-    if current_user.site_id:
-        query = query.filter(InferenceResult.site_id == current_user.site_id)
-
     total_scans = query.count()
 
     # Get risk breakdown
@@ -199,13 +193,9 @@ def get_dashboard_stats(
 
 @router.get("/cloud-stats")
 def get_cloud_stats(
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get cloud admin statistics (admin only)"""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
+    """Get cloud admin statistics (public for now)"""
     from app.models.models import Device
 
     total_tenants = db.query(Tenant).count()

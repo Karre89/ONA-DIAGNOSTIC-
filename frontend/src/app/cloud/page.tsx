@@ -41,25 +41,14 @@ export default function CloudDashboardPage() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    // Load user info if available
     const userStr = localStorage.getItem('user')
-
-    if (!token) {
-      router.push('/')
-      return
-    }
-
     if (userStr) {
-      const userData = JSON.parse(userStr)
-      setUser(userData)
-      if (userData.role !== 'admin') {
-        router.push('/dashboard')
-        return
-      }
+      setUser(JSON.parse(userStr))
     }
 
     fetchStats()
-  }, [router])
+  }, [])
 
   const fetchStats = async () => {
     try {

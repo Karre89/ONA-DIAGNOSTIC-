@@ -39,15 +39,8 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token')
+    // Load user info if available
     const userStr = localStorage.getItem('user')
-
-    if (!token) {
-      router.push('/')
-      return
-    }
-
     if (userStr) {
       setUser(JSON.parse(userStr))
     }
