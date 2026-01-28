@@ -39,7 +39,6 @@ interface Site {
   country: string
   organization: string
   devices: number
-  status: string
 }
 
 export default function SitesPage() {
