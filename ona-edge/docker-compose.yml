@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ona-edge:
+    build: .
+    container_name: ona-edge
+    restart: unless-stopped
+
+    environment:
+      - ONA_DEVICE_ID=${ONA_DEVICE_ID:-ONA-DEV-001}
+      - ONA_SITE_ID=${ONA_SITE_ID:-site-001}
+      - ONA_CLOUD_API=${ONA_CLOUD_API:-https://ona-diagnostic-production.up.railway.app/api/v1}
+      - ONA_API_KEY=${ONA_API_KEY:-}
+      - ONA_DEVICE=${ONA_DEVICE:-cpu}
+
+    ports:
+      - "11112:11112"  # DICOM
+      - "8080:8080"    # Web UI
+
+    volumes:
+      - ona-data:/data
+      - ./data/models:/data/models:ro
+
+    # Uncomment for NVIDIA GPU support (Jetson)
+    # runtime: nvidia
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  ona-data:

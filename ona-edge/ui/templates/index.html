@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONA Health - AI TB Screening</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ona': {
+                            primary: '#14b8a6',
+                            dark: '#0f172a',
+                            card: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-ona-dark text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-ona-card border-b border-gray-700 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-ona-primary rounded-xl flex items-center justify-center">
+                    <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold">ONA Health</h1>
+                    <p class="text-sm text-gray-400">AI-Powered TB Screening</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6">
+                <select id="language" class="bg-gray-700 rounded-lg px-3 py-2 text-sm">
+                    <option value="en">English</option>
+                    <option value="sw">Kiswahili</option>
+                    <option value="rw">Kinyarwanda</option>
+                </select>
+                <div id="sync-status" class="flex items-center space-x-2">
+                    <span class="relative flex h-3 w-3">
+                        <span class="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 pulse-ring"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <span class="text-sm text-gray-300">Online</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-6">
+        <!-- Waiting for Scan -->
+        <div id="waiting-screen" class="text-center py-20">
+            <div class="animate-pulse">
+                <div class="w-32 h-32 mx-auto bg-ona-primary/20 rounded-full flex items-center justify-center mb-8">
+                    <svg class="w-16 h-16 text-ona-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-semibold mb-4" data-i18n="waiting">Waiting for X-ray...</h2>
+                <p class="text-gray-400 text-lg max-w-md mx-auto" data-i18n="instructions">
+                    Take an X-ray on the connected machine. Results will appear automatically within seconds.
+                </p>
+            </div>
+        </div>
+
+        <!-- Latest Result (hidden initially) -->
+        <div id="result-screen" class="hidden">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Recent Scans -->
+        <div class="mt-12">
+            <h3 class="text-xl font-semibold mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-ona-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Recent Scans
+            </h3>
+            <div id="recent-scans" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated by JavaScript -->
+                <div class="bg-ona-card rounded-xl p-6 text-center text-gray-400">
+                    No scans yet. Take an X-ray to begin.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-ona-card border-t border-gray-700 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between text-sm text-gray-400">
+            <span>Device: {{ device_id }}</span>
+            <span id="last-sync">Last sync: --</span>
+            <span>ONA Health v1.0</span>
+        </div>
+    </footer>
+
+    <script>
+        // WebSocket connection for real-time updates
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'new_scan') {
+                showResult(data.data);
+                addToRecentScans(data.data);
+            }
+        };
+
+        ws.onclose = function() {
+            document.getElementById('sync-status').innerHTML = `
+                <span class="relative flex h-3 w-3">
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <span class="text-sm text-gray-300">Offline</span>
+            `;
+        };
+
+        function showResult(result) {
+            document.getElementById('waiting-screen').classList.add('hidden');
+            const resultScreen = document.getElementById('result-screen');
+            resultScreen.classList.remove('hidden');
+
+            const tb = result.conditions?.tb || {};
+            const severity = tb.severity || 'LOW';
+            const probability = tb.probability || 0;
+
+            const severityColors = {
+                'LOW': 'bg-green-500',
+                'MEDIUM': 'bg-yellow-500',
+                'HIGH': 'bg-red-500'
+            };
+
+            const severityBg = {
+                'LOW': 'bg-green-500/10 border-green-500/30',
+                'MEDIUM': 'bg-yellow-500/10 border-yellow-500/30',
+                'HIGH': 'bg-red-500/10 border-red-500/30'
+            };
+
+            resultScreen.innerHTML = `
+                <div class="bg-ona-card rounded-2xl p-8 mb-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <h2 class="text-2xl font-bold">Scan Result</h2>
+                        <span class="text-sm text-gray-400">ID: ${result.scan_id}</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Images -->
+                        <div class="space-y-4">
+                            <div class="bg-gray-900 rounded-xl p-4">
+                                <p class="text-sm text-gray-400 mb-2">Original X-ray</p>
+                                ${result.original_image_b64 ?
+                                    `<img src="data:image/png;base64,${result.original_image_b64}" class="w-full rounded-lg" alt="X-ray">` :
+                                    '<div class="w-full h-64 bg-gray-800 rounded-lg flex items-center justify-center text-gray-500">No image</div>'
+                                }
+                            </div>
+                            <div class="bg-gray-900 rounded-xl p-4">
+                                <p class="text-sm text-gray-400 mb-2">AI Analysis Heatmap</p>
+                                ${tb.overlay_b64 ?
+                                    `<img src="data:image/png;base64,${tb.overlay_b64}" class="w-full rounded-lg" alt="Heatmap">` :
+                                    '<div class="w-full h-64 bg-gray-800 rounded-lg flex items-center justify-center text-gray-500">No heatmap</div>'
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="space-y-6">
+                            <!-- Probability -->
+                            <div class="bg-gray-900 rounded-xl p-6">
+                                <p class="text-sm text-gray-400 mb-2">TB Probability</p>
+                                <div class="flex items-end gap-4">
+                                    <span class="text-5xl font-bold">${probability}%</span>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium ${severityColors[severity]}">${severity}</span>
+                                </div>
+                                <div class="mt-4 h-4 bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full ${severityColors[severity]} transition-all duration-1000" style="width: ${probability}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Recommendation -->
+                            <div class="border rounded-xl p-6 ${severityBg[severity]}">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-6 h-6 mt-0.5 flex-shrink-0 ${severity === 'HIGH' ? 'text-red-500' : severity === 'MEDIUM' ? 'text-yellow-500' : 'text-green-500'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="font-semibold mb-1">Recommendation</p>
+                                        <p class="text-gray-300">${tb.recommendation || 'Consult physician.'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Processing Info -->
+                            <div class="bg-gray-900 rounded-xl p-6">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p class="text-gray-400">Processing Time</p>
+                                        <p class="font-medium">${result.processing_time_ms || 0}ms</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400">Timestamp</p>
+                                        <p class="font-medium">${new Date(result.timestamp).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex gap-4">
+                                <button onclick="window.print()" class="flex-1 bg-ona-primary hover:bg-ona-primary/80 text-white py-3 px-6 rounded-xl font-medium transition">
+                                    Print Report
+                                </button>
+                                <button onclick="resetScreen()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-xl font-medium transition">
+                                    New Scan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addToRecentScans(result) {
+            const container = document.getElementById('recent-scans');
+            const tb = result.conditions?.tb || {};
+            const severity = tb.severity || 'LOW';
+
+            const severityColors = {
+                'LOW': 'bg-green-500',
+                'MEDIUM': 'bg-yellow-500',
+                'HIGH': 'bg-red-500'
+            };
+
+            const card = document.createElement('div');
+            card.className = 'bg-ona-card rounded-xl p-4 cursor-pointer hover:bg-gray-700 transition';
+            card.onclick = () => showResult(result);
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-sm text-gray-400">${result.scan_id}</span>
+                    <span class="px-2 py-0.5 rounded text-xs font-medium ${severityColors[severity]}">${severity}</span>
+                </div>
+                <p class="text-2xl font-bold">${tb.probability || 0}%</p>
+                <p class="text-sm text-gray-400">${new Date(result.timestamp).toLocaleTimeString()}</p>
+            `;
+
+            // Remove placeholder if exists
+            const placeholder = container.querySelector('.text-gray-400');
+            if (placeholder && placeholder.textContent.includes('No scans')) {
+                container.innerHTML = '';
+            }
+
+            container.insertBefore(card, container.firstChild);
+
+            // Keep only last 9
+            while (container.children.length > 9) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function resetScreen() {
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.remove('hidden');
+        }
+
+        // Load recent scans on page load
+        fetch('/api/scans')
+            .then(r => r.json())
+            .then(scans => {
+                if (scans.length > 0) {
+                    scans.forEach(scan => addToRecentScans(scan));
+                    showResult(scans[0]);
+                }
+            });
+    </script>
+</body>
+</html>
