@@ -150,6 +150,7 @@ class SyncService:
                         json=payload,
                         headers=self._get_headers()
                     )
+                    # Note: Endpoint is POST /api/v1/results (already exists in cloud)
 
                     if response.status_code in (200, 201):
                         self._mark_synced(row_id)

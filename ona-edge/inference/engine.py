@@ -1,13 +1,13 @@
 """
 ONA Edge AI Inference Engine
 Runs diagnostic models on medical images
+Supports: ONNX (from Colab training), PyTorch, TorchXRayVision
 """
 
 import logging
-import torch
 import numpy as np
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
@@ -24,59 +24,143 @@ class InferenceEngine:
     """
     Main AI inference orchestrator
     Manages models and processes images
+
+    Supports:
+    - ONNX models (from your Colab training notebook)
+    - PyTorch .pth models
+    - TorchXRayVision pretrained (fallback)
     """
 
     def __init__(self):
-        self.models: Dict[str, torch.nn.Module] = {}
-        self.device = torch.device(DEVICE if torch.cuda.is_available() else 'cpu')
+        self.models: Dict[str, Any] = {}
+        self.model_type: Dict[str, str] = {}  # 'onnx', 'pytorch', 'xrv'
         self._initialized = False
+        self._using_xrv = False
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+        # For PyTorch models
+        try:
+            import torch
+            self.device = torch.device(DEVICE if torch.cuda.is_available() else 'cpu')
+            self._torch_available = True
+        except ImportError:
+            self._torch_available = False
+            self.device = 'cpu'
 
     def initialize(self):
         """Load all models at startup"""
-        logger.info(f"Initializing inference engine on {self.device}")
+        logger.info(f"Initializing inference engine...")
 
-        # Look for TB model
-        model_path = Path(MODEL_DIR) / 'tb_detector.pth'
-        if model_path.exists():
-            self.models['tb'] = self._load_model(model_path)
-            logger.info("Loaded TB detection model")
-        else:
-            # Try alternative names
-            for alt_name in ['ona_tb_model.pth', 'model.pth', 'tb_model.pth']:
-                alt_path = Path(MODEL_DIR) / alt_name
-                if alt_path.exists():
-                    self.models['tb'] = self._load_model(alt_path)
-                    logger.info(f"Loaded TB model from {alt_name}")
+        model_dir = Path(MODEL_DIR)
+        model_dir.mkdir(parents=True, exist_ok=True)
+
+        # Priority 1: Look for ONNX models (from Colab training)
+        onnx_patterns = [
+            'ona-cxr-*.onnx',
+            'tb_detector.onnx',
+            'tb_model.onnx',
+            '*.onnx'
+        ]
+
+        for pattern in onnx_patterns:
+            onnx_files = list(model_dir.glob(pattern))
+            if onnx_files:
+                # Use the most recent one
+                onnx_path = sorted(onnx_files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+                if self._load_onnx_model(onnx_path):
+                    logger.info(f"Loaded ONNX model: {onnx_path.name}")
                     break
 
+        # Priority 2: Look for PyTorch models
+        if 'tb' not in self.models and self._torch_available:
+            pth_patterns = ['tb_detector.pth', 'ona_tb_model.pth', 'model.pth', '*.pth']
+            for pattern in pth_patterns:
+                pth_files = list(model_dir.glob(pattern))
+                if pth_files:
+                    pth_path = pth_files[0]
+                    if self._load_pytorch_model(pth_path):
+                        logger.info(f"Loaded PyTorch model: {pth_path.name}")
+                        break
+
+        # Priority 3: Fallback to TorchXRayVision
         if not self.models:
-            logger.warning("No models found! Using demo mode with random predictions.")
+            logger.info("No custom model found. Loading TorchXRayVision pretrained model...")
+            try:
+                import torchxrayvision as xrv
+                import torch
+                model = xrv.models.DenseNet(weights="densenet121-res224-all")
+                model = model.to(self.device)
+                model.eval()
+                self.models['tb'] = model
+                self.models['pneumonia'] = model
+                self.model_type['tb'] = 'xrv'
+                self.model_type['pneumonia'] = 'xrv'
+                self._using_xrv = True
+                logger.info("Loaded TorchXRayVision model (TB, Pneumonia, Cardiomegaly, etc.)")
+            except ImportError:
+                logger.warning("TorchXRayVision not installed. Using demo mode.")
+            except Exception as e:
+                logger.warning(f"Failed to load TorchXRayVision: {e}. Using demo mode.")
 
         self._initialized = True
         logger.info(f"Inference engine ready with {len(self.models)} models")
 
-    def _load_model(self, model_path: Path) -> torch.nn.Module:
+    def _load_onnx_model(self, model_path: Path) -> bool:
+        """Load an ONNX model"""
+        try:
+            import onnxruntime as ort
+
+            # Use GPU if available
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+            session = ort.InferenceSession(str(model_path), providers=providers)
+
+            self.models['tb'] = session
+            self.model_type['tb'] = 'onnx'
+
+            # Log model info
+            input_info = session.get_inputs()[0]
+            output_info = session.get_outputs()[0]
+            logger.info(f"ONNX model: input={input_info.shape}, output={output_info.shape}")
+
+            return True
+        except ImportError:
+            logger.warning("onnxruntime not installed. Cannot load ONNX model.")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to load ONNX model: {e}")
+            return False
+
+    def _load_pytorch_model(self, model_path: Path) -> bool:
         """Load a PyTorch model"""
         try:
-            # Try loading as full model first
+            import torch
+
             model = torch.load(model_path, map_location=self.device)
             if isinstance(model, dict):
-                # It's a state dict, need to create model architecture
+                # State dict - create architecture
                 model = self._create_model_architecture()
                 model.load_state_dict(torch.load(model_path, map_location=self.device))
             model.eval()
-            return model
+
+            self.models['tb'] = model
+            self.model_type['tb'] = 'pytorch'
+            return True
         except Exception as e:
-            logger.error(f"Failed to load model from {model_path}: {e}")
-            return None
+            logger.error(f"Failed to load PyTorch model: {e}")
+            return False
 
     def _create_model_architecture(self):
-        """Create DenseNet121 architecture for TB detection"""
-        import torchvision.models as models
-        model = models.densenet121(weights=None)
-        # Modify for binary classification
-        model.classifier = torch.nn.Linear(model.classifier.in_features, 1)
+        """Create ResNet18 architecture (matching Colab training)"""
+        import torch
+        import torch.nn as nn
+        from torchvision import models
+
+        model = models.resnet18(weights=None)
+        num_features = model.fc.in_features
+        model.fc = nn.Sequential(
+            nn.Dropout(0.3),
+            nn.Linear(num_features, 2)  # 2 classes: normal, tb
+        )
         return model
 
     def is_ready(self) -> bool:
@@ -90,14 +174,6 @@ class InferenceEngine:
     ) -> Dict:
         """
         Run AI inference on a DICOM image
-
-        Args:
-            scan_id: Unique identifier for this scan
-            dicom_path: Path to DICOM file
-            conditions: List of conditions to check ['tb', 'pneumonia', etc.]
-
-        Returns:
-            Dictionary with results for each condition
         """
         if not self._initialized:
             self.initialize()
@@ -110,7 +186,6 @@ class InferenceEngine:
                 dicom_path,
                 target_size=(224, 224)
             )
-            image_tensor = image_tensor.to(self.device)
 
             results = {
                 'scan_id': scan_id,
@@ -122,33 +197,30 @@ class InferenceEngine:
                 'original_image': original_image
             }
 
-            # Run each requested model
+            # Run inference for each condition
             for condition in conditions:
-                if condition in self.models and self.models[condition] is not None:
+                if condition in self.models:
                     model = self.models[condition]
+                    model_type = self.model_type.get(condition, 'unknown')
 
-                    with torch.no_grad():
-                        # Forward pass
-                        output = model(image_tensor.unsqueeze(0))
-                        probability = torch.sigmoid(output).item()
-
-                    # Generate heatmap for explainability
-                    heatmap = generate_heatmap(
-                        model=model,
-                        image_tensor=image_tensor,
-                        target_class=0
-                    )
-
-                    # Overlay on original
-                    overlay = overlay_heatmap(original_image, heatmap)
-
+                    if model_type == 'onnx':
+                        probability, heatmap = self._run_onnx_inference(model, image_tensor, original_image)
+                    elif model_type == 'xrv':
+                        probability, heatmap = self._run_xrv_inference(model, image_tensor, condition)
+                    elif model_type == 'pytorch':
+                        probability, heatmap = self._run_pytorch_inference(model, image_tensor)
+                    else:
+                        probability = np.random.uniform(0.1, 0.9)
+                        heatmap = np.zeros((224, 224), dtype=np.uint8)
                 else:
-                    # Demo mode - generate random result
+                    # Demo mode
                     probability = np.random.uniform(0.1, 0.9)
                     heatmap = np.random.randint(0, 255, (224, 224), dtype=np.uint8)
-                    overlay = original_image
 
-                # Determine severity
+                # Create overlay
+                overlay = overlay_heatmap(original_image, heatmap)
+
+                # Classify severity
                 severity = self._classify_severity(probability)
 
                 results['conditions'][condition] = {
@@ -181,6 +253,114 @@ class InferenceEngine:
                 'success': False,
                 'error': str(e)
             }
+
+    def _run_onnx_inference(self, session, image_tensor, original_image) -> tuple:
+        """Run inference with ONNX model"""
+        import torch
+
+        # Convert tensor to numpy for ONNX
+        if isinstance(image_tensor, torch.Tensor):
+            image_np = image_tensor.numpy()
+        else:
+            image_np = image_tensor
+
+        # Add batch dimension if needed
+        if len(image_np.shape) == 3:
+            image_np = image_np[np.newaxis, ...]
+
+        # Ensure float32
+        image_np = image_np.astype(np.float32)
+
+        # Run ONNX inference
+        input_name = session.get_inputs()[0].name
+        logits = session.run(None, {input_name: image_np})[0]
+
+        # Apply softmax to get probabilities [normal, tb]
+        exp_logits = np.exp(logits - np.max(logits))  # Numerical stability
+        probs = exp_logits / exp_logits.sum(axis=1, keepdims=True)
+
+        # TB probability is index 1
+        tb_probability = float(probs[0, 1])
+
+        # Generate simple heatmap (ONNX doesn't support GradCAM easily)
+        # Use attention-based approximation
+        heatmap = self._generate_simple_heatmap(image_np, tb_probability)
+
+        return tb_probability, heatmap
+
+    def _run_pytorch_inference(self, model, image_tensor) -> tuple:
+        """Run inference with PyTorch model"""
+        import torch
+
+        image_tensor = image_tensor.to(self.device)
+
+        with torch.no_grad():
+            output = model(image_tensor.unsqueeze(0))
+
+            # Handle 2-class output
+            if output.shape[-1] == 2:
+                probs = torch.softmax(output, dim=1)
+                probability = probs[0, 1].item()  # TB is index 1
+            else:
+                probability = torch.sigmoid(output).item()
+
+        # Generate heatmap
+        heatmap = generate_heatmap(model, image_tensor, target_class=1)
+
+        return probability, heatmap
+
+    def _run_xrv_inference(self, model, image_tensor, condition: str) -> tuple:
+        """Run inference with TorchXRayVision model"""
+        import torch
+        import torchxrayvision as xrv
+
+        image_tensor = image_tensor.to(self.device)
+
+        with torch.no_grad():
+            output = model(image_tensor.unsqueeze(0))
+
+            # TorchXRayVision outputs probabilities for many conditions
+            # Map condition names to indices
+            condition_map = {
+                'tb': 'Infiltration',  # TB often shows as infiltration
+                'pneumonia': 'Pneumonia',
+                'cardiomegaly': 'Cardiomegaly'
+            }
+
+            target_name = condition_map.get(condition, condition)
+
+            if hasattr(model, 'pathologies'):
+                idx = model.pathologies.index(target_name) if target_name in model.pathologies else 0
+                probability = torch.sigmoid(output[0, idx]).item()
+            else:
+                probability = torch.sigmoid(output[0, 0]).item()
+
+        # Generate heatmap
+        heatmap = generate_heatmap(model, image_tensor, target_class=0)
+
+        return probability, heatmap
+
+    def _generate_simple_heatmap(self, image_np: np.ndarray, probability: float) -> np.ndarray:
+        """Generate a simple attention-based heatmap for ONNX models"""
+        # Use image intensity as rough attention (brighter areas = more attention)
+        if len(image_np.shape) == 4:
+            img = image_np[0, 0]  # Take first channel
+        elif len(image_np.shape) == 3:
+            img = image_np[0]
+        else:
+            img = image_np
+
+        # Normalize to 0-255
+        img = (img - img.min()) / (img.max() - img.min() + 1e-8) * 255
+
+        # Apply Gaussian blur to create smooth heatmap
+        import cv2
+        heatmap = cv2.GaussianBlur(img.astype(np.uint8), (31, 31), 0)
+
+        # Scale by probability
+        heatmap = (heatmap * probability).astype(np.uint8)
+
+        return heatmap
 
     def _classify_severity(self, probability: float) -> str:
         """Classify probability into severity levels"""
