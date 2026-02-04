@@ -70,11 +70,11 @@ def seed_data(request: SeedRequest, db: Session = Depends(get_db)):
 
     if existing_device:
         device = existing_device
-        # Generate new token for existing device
-        device_token = "dev-device-token"  # Use fixed token for dev
+        # Generate new unique token for existing device
+        device_token = secrets.token_urlsafe(32)
         device.device_token_hash = hash_token(device_token)
     else:
-        device_token = "dev-device-token"  # Use fixed token for dev
+        device_token = secrets.token_urlsafe(32)  # Unique token per device
         device = Device(
             tenant_id=tenant.id,
             site_id=site.id,
