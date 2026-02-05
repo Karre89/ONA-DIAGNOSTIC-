@@ -1,11 +1,12 @@
 import secrets
 import hashlib
-from fastapi import APIRouter, Depends
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.models import Tenant, Site, Device, ModelVersion
+from app.models.models import Tenant, Site, Device, ModelVersion, InferenceResult, FeedbackSync
 
 router = APIRouter(prefix="/seed", tags=["seed"])
 
@@ -111,3 +112,77 @@ def seed_data(request: SeedRequest, db: Session = Depends(get_db)):
         device_token=device_token,
         message="Seed data created successfully"
     )
+
+
+class DeleteTenantResponse(BaseModel):
+    deleted_tenant: str
+    deleted_sites: int
+    deleted_devices: int
+    deleted_results: int
+    deleted_feedback: int
+    message: str
+
+
+@router.delete("/tenant/{tenant_id}", response_model=DeleteTenantResponse)
+def delete_tenant(tenant_id: str, db: Session = Depends(get_db)):
+    """Delete a tenant and all associated data (sites, devices, results, feedback)."""
+    # Find tenant
+    tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    tenant_name = tenant.name
+
+    # Get site IDs for this tenant
+    site_ids = [s.id for s in db.query(Site).filter(Site.tenant_id == tenant_id).all()]
+
+    # Delete feedback for this tenant's sites
+    feedback_count = db.query(FeedbackSync).filter(FeedbackSync.tenant_id == tenant_id).delete()
+
+    # Delete inference results for this tenant
+    results_count = db.query(InferenceResult).filter(InferenceResult.tenant_id == tenant_id).delete()
+
+    # Delete devices for this tenant
+    devices_count = db.query(Device).filter(Device.tenant_id == tenant_id).delete()
+
+    # Delete sites for this tenant
+    sites_count = db.query(Site).filter(Site.tenant_id == tenant_id).delete()
+
+    # Delete the tenant
+    db.delete(tenant)
+    db.commit()
+
+    return DeleteTenantResponse(
+        deleted_tenant=tenant_name,
+        deleted_sites=sites_count,
+        deleted_devices=devices_count,
+        deleted_results=results_count,
+        deleted_feedback=feedback_count,
+        message=f"Successfully deleted tenant '{tenant_name}' and all associated data"
+    )
+
+
+class TenantInfo(BaseModel):
+    id: str
+    name: str
+    tenant_type: str
+    sites_count: int
+    devices_count: int
+
+
+@router.get("/tenants", response_model=List[TenantInfo])
+def list_tenants(db: Session = Depends(get_db)):
+    """List all tenants with their site and device counts."""
+    tenants = db.query(Tenant).all()
+    result = []
+    for tenant in tenants:
+        sites_count = db.query(Site).filter(Site.tenant_id == tenant.id).count()
+        devices_count = db.query(Device).filter(Device.tenant_id == tenant.id).count()
+        result.append(TenantInfo(
+            id=str(tenant.id),
+            name=tenant.name,
+            tenant_type=tenant.tenant_type,
+            sites_count=sites_count,
+            devices_count=devices_count
+        ))
+    return result
