@@ -82,34 +82,46 @@ def get_current_user(
 
 @router.post("/register", response_model=TokenResponse)
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    # Check if user already exists
-    existing = db.query(User).filter(User.email == request.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    import logging
+    logger = logging.getLogger(__name__)
 
-    # Create user
-    user = User(
-        email=request.email,
-        password_hash=hash_password(request.password),
-        full_name=request.full_name,
-        role=request.role
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        # Check if user already exists
+        existing = db.query(User).filter(User.email == request.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Create token
-    token = create_access_token({"sub": str(user.id)})
+        # Create user
+        logger.info(f"Creating user: {request.email}")
+        user = User(
+            email=request.email,
+            password_hash=hash_password(request.password),
+            full_name=request.full_name,
+            role=request.role
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"User created: {user.id}")
 
-    return TokenResponse(
-        access_token=token,
-        user={
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role
-        }
-    )
+        # Create token
+        token = create_access_token({"sub": str(user.id)})
+
+        return TokenResponse(
+            access_token=token,
+            user={
+                "id": str(user.id),
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": user.role
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Registration error: {type(e).__name__}: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 
 @router.post("/login", response_model=TokenResponse)
