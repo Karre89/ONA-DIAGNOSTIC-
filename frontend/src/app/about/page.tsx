@@ -23,8 +23,8 @@ import Link from 'next/link'
 const features = [
   {
     icon: Zap,
-    title: 'AI-Powered Detection',
-    description: 'Advanced ResNet18 model trained on thousands of chest X-rays for accurate TB screening.',
+    title: 'Multi-Condition Detection',
+    description: 'AI trained on 600K+ chest X-rays. Detects TB, Pneumonia, Cardiomegaly, and 10+ other conditions.',
   },
   {
     icon: WifiOff,
@@ -108,11 +108,11 @@ export default function AboutPage() {
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
               AI-Powered<br />
-              <span className="text-gradient">TB Screening</span>
+              <span className="text-gradient">Medical Imaging</span>
             </h1>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Edge-first diagnostics for Africa. Fast, accurate, offline-capable TB detection
-              that works where you need it most.
+              Edge-first diagnostics for Africa. Fast, accurate, offline-capable screening
+              for TB, Pneumonia, Cardiac conditions and more.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/" className="btn-primary flex items-center gap-2">
@@ -229,7 +229,7 @@ export default function AboutPage() {
                 </div>
               </div>
               <p className="text-gray-400 text-center">
-                See how ONA Health transforms TB screening at clinics across Africa.
+                See how ONA Health transforms medical imaging at clinics across Africa.
               </p>
             </motion.div>
           </div>

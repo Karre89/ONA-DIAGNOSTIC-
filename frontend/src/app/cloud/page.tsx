@@ -130,7 +130,7 @@ export default function CloudDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white">Dashboard Overview</h2>
-              <p className="text-sm text-gray-400">Monitor your global TB screening network</p>
+              <p className="text-sm text-gray-400">Monitor your global diagnostic imaging network</p>
             </div>
             <div className="flex items-center gap-4">
               <button

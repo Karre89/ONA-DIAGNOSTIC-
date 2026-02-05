@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ONA Health - AI-Powered TB Screening',
-  description: 'Edge-first AI diagnostics for TB triage. See Clearly. Act Quickly.',
+  title: 'ONA Health - AI-Powered Medical Imaging',
+  description: 'Edge-first AI diagnostics for Africa. TB, Pneumonia, Cardiac screening and more. See Clearly. Act Quickly.',
   icons: {
     icon: '/favicon.ico',
   },

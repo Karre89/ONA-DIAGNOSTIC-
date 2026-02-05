@@ -172,7 +172,7 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-bold text-white mb-2">
             Welcome back, {user?.full_name || 'User'}
           </h2>
-          <p className="text-gray-400">Here's your TB screening overview</p>
+          <p className="text-gray-400">Here's your diagnostic screening overview</p>
         </motion.div>
 
         {/* Error Banner */}
@@ -253,35 +253,57 @@ export default function DashboardPage() {
                   <p className="text-sm mt-1">Upload a chest X-ray to get started</p>
                 </div>
               ) : (
-                stats?.recent_results.map((result, index) => (
-                  <motion.div
-                    key={result.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`px-3 py-1 rounded-lg text-sm font-medium border ${getRiskColor(result.risk_bucket)}`}>
-                        {result.risk_bucket}
+                stats?.recent_results.map((result, index) => {
+                  // Get top 3 conditions from scores
+                  const scores = result.scores || {};
+                  const conditionLabels: Record<string, string> = {
+                    tb: 'TB', Tuberculosis: 'TB',
+                    pneumonia: 'Pneum', Pneumonia: 'Pneum',
+                    cardiomegaly: 'Cardiac', Cardiomegaly: 'Cardiac',
+                    Atelectasis: 'Atel', Consolidation: 'Consol',
+                    Edema: 'Edema', Effusion: 'Effus',
+                    Emphysema: 'Emphy', Fibrosis: 'Fibro',
+                    Hernia: 'Hernia', Infiltration: 'Infil',
+                    Mass: 'Mass', Nodule: 'Nodule',
+                    Pleural_Thickening: 'PlThk', Pneumothorax: 'PnTx'
+                  };
+                  const topConditions = Object.entries(scores)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 3);
+
+                  return (
+                    <motion.div
+                      key={result.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`px-3 py-1 rounded-lg text-sm font-medium border ${getRiskColor(result.risk_bucket)}`}>
+                          {result.risk_bucket}
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Study {result.study_id.slice(0, 12)}</p>
+                          <p className="text-sm text-gray-400">{formatTimeAgo(result.created_at)}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-white font-medium">Study {result.study_id.slice(0, 12)}</p>
-                        <p className="text-sm text-gray-400">{formatTimeAgo(result.created_at)}</p>
+                      <div className="flex items-center gap-3">
+                        {/* Show top 3 conditions */}
+                        {topConditions.map(([condition, score]) => (
+                          <div key={condition} className="text-center min-w-[50px]">
+                            <p className={`text-lg font-bold ${
+                              score >= 0.6 ? 'text-red-400' :
+                              score >= 0.3 ? 'text-yellow-400' : 'text-green-400'
+                            }`}>{Math.round(score * 100)}%</p>
+                            <p className="text-xs text-gray-500">{conditionLabels[condition] || condition.slice(0, 5)}</p>
+                          </div>
+                        ))}
+                        <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-ona-primary transition-colors ml-2" />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className={`text-2xl font-bold ${
-                          (result.scores?.tb || 0) >= 0.6 ? 'text-red-400' :
-                          (result.scores?.tb || 0) >= 0.3 ? 'text-yellow-400' : 'text-green-400'
-                        }`}>{Math.round((result.scores?.tb || 0) * 100)}%</p>
-                        <p className="text-xs text-gray-400">TB Score</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-ona-primary transition-colors" />
-                    </div>
-                  </motion.div>
-                ))
+                    </motion.div>
+                  );
+                })
               )}
             </div>
           </motion.div>
@@ -318,12 +340,19 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Architecture</span>
-                  <span className="text-white font-medium">ResNet18</span>
+                  <span className="text-white font-medium">DenseNet</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Conditions</span>
+                  <span className="text-ona-primary font-medium">14+</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Status</span>
                   <span className="text-green-400 font-medium">Active</span>
                 </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <p className="text-xs text-gray-500">TB • Pneumonia • Cardiomegaly • Effusion • more</p>
               </div>
             </div>
 

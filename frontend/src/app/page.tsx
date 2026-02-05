@@ -91,7 +91,7 @@ export default function LoginPage() {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">ONA Health</h1>
-            <p className="text-ona-primary font-medium">AI-Powered TB Screening</p>
+            <p className="text-ona-primary font-medium">AI-Powered Medical Imaging</p>
           </motion.div>
 
           {/* Error Message */}
