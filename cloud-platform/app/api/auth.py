@@ -267,6 +267,6 @@ def get_devices(db: Session = Depends(get_db)):
             "site": site.name if site else "Unknown",
             "organization": tenant.name if tenant else "Unknown",
             "status": device.status,
-            "last_heartbeat": device.last_heartbeat.isoformat() if device.last_heartbeat else None
+            "last_heartbeat": device.last_seen_at.isoformat() if device.last_seen_at else None
         })
     return result
