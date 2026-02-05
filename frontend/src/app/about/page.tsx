@@ -10,11 +10,8 @@ import {
   Lock,
   Mail,
   MapPin,
-  Phone,
   Shield,
   Smartphone,
-  Users,
-  Wifi,
   WifiOff,
   Zap,
 } from 'lucide-react'
@@ -54,10 +51,10 @@ const features = [
 ]
 
 const stats = [
-  { value: '50K+', label: 'Scans Processed' },
-  { value: '98%', label: 'Accuracy Rate' },
-  { value: '47', label: 'Active Sites' },
-  { value: '12', label: 'Countries' },
+  { value: '600K+', label: 'Training Images' },
+  { value: '14', label: 'Conditions Detected' },
+  { value: '<2s', label: 'Processing Time' },
+  { value: '3', label: 'Languages' },
 ]
 
 export default function AboutPage() {
@@ -193,20 +190,21 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <p className="text-gray-400 mb-6">
-                Tuberculosis kills 1.3 million people every year, with Africa bearing the heaviest burden.
-                Early detection is crucial, but many clinics lack access to specialists.
+                Millions die each year from treatable conditions — TB, pneumonia, heart disease —
+                simply because their local clinic lacks a specialist to read a scan.
+                Early detection saves lives, but access to expertise remains limited.
               </p>
               <p className="text-gray-400 mb-6">
-                ONA Health brings AI-powered screening to the point of care. Our edge-first approach
-                means clinics can screen patients even without reliable internet, ensuring no one
-                is left behind.
+                ONA Health brings AI-powered diagnostics to the point of care. Our edge-first approach
+                means clinics can screen for 14+ conditions even without reliable internet, ensuring
+                no one is left behind.
               </p>
               <div className="space-y-3">
                 {[
-                  'Screen patients in under 2 minutes',
-                  'Works offline with automatic sync',
-                  'Multi-language support for local staff',
-                  'Seamless integration with X-ray equipment',
+                  'Screen for TB, pneumonia, cardiac conditions and more',
+                  'Results in under 2 minutes, works offline',
+                  'Multi-language support (English, Swahili, Somali)',
+                  'Seamless integration with any X-ray equipment',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-ona-primary flex-shrink-0" />
@@ -222,14 +220,24 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="glass-card rounded-3xl p-8"
             >
-              <div className="aspect-video rounded-2xl bg-gradient-to-br from-ona-dark to-ona-darker flex items-center justify-center mb-6">
-                <div className="text-center">
-                  <Activity className="w-16 h-16 text-ona-primary mx-auto mb-4" />
-                  <p className="text-gray-400">Platform Demo</p>
-                </div>
+              <h3 className="text-2xl font-bold text-white mb-6">What We Detect</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { condition: 'Tuberculosis', icon: '🫁' },
+                  { condition: 'Pneumonia', icon: '🦠' },
+                  { condition: 'Cardiomegaly', icon: '❤️' },
+                  { condition: 'Pleural Effusion', icon: '💧' },
+                  { condition: 'Atelectasis', icon: '🔬' },
+                  { condition: 'Consolidation', icon: '📊' },
+                ].map((item) => (
+                  <div key={item.condition} className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                    <span className="text-xl">{item.icon}</span>
+                    <span className="text-gray-300 text-sm">{item.condition}</span>
+                  </div>
+                ))}
               </div>
-              <p className="text-gray-400 text-center">
-                See how ONA Health transforms medical imaging at clinics across Africa.
+              <p className="text-gray-500 text-sm mt-4 text-center">
+                + 8 more conditions powered by TorchXRayVision
               </p>
             </motion.div>
           </div>
@@ -263,11 +271,11 @@ export default function AboutPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-ona-primary/10 flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-ona-primary" />
+                      <Globe className="w-5 h-5 text-ona-primary" />
                     </div>
                     <div>
-                      <p className="text-gray-400 text-sm">Phone</p>
-                      <p className="text-white">+254 700 000 000</p>
+                      <p className="text-gray-400 text-sm">Website</p>
+                      <p className="text-white">onahealth.ai</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
