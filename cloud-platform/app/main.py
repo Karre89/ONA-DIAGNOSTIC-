@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import engine, Base
 from app.api.router import api_router
+# Import all models to ensure they're registered with SQLAlchemy before create_all()
+from app.models import models  # noqa: F401
 
 # Configure logging
 logging.basicConfig(
