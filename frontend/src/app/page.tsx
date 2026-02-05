@@ -64,8 +64,8 @@ export default function LoginPage() {
       </div>
 
       {/* Glow effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ona-primary/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-ona-secondary/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ona-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-ona-secondary/10 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
