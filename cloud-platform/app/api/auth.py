@@ -15,7 +15,7 @@ from app.models.models import User, Tenant, Site, InferenceResult
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 class RegisterRequest(BaseModel):
