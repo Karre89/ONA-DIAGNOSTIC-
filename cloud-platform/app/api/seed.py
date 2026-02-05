@@ -186,3 +186,58 @@ def list_tenants(db: Session = Depends(get_db)):
             devices_count=devices_count
         ))
     return result
+
+
+class SiteInfo(BaseModel):
+    id: str
+    name: str
+    site_code: str
+    tenant_name: str
+    devices_count: int
+
+
+@router.get("/sites", response_model=List[SiteInfo])
+def list_sites(db: Session = Depends(get_db)):
+    """List all sites with their device counts."""
+    sites = db.query(Site).all()
+    result = []
+    for site in sites:
+        tenant = db.query(Tenant).filter(Tenant.id == site.tenant_id).first()
+        devices_count = db.query(Device).filter(Device.site_id == site.id).count()
+        result.append(SiteInfo(
+            id=str(site.id),
+            name=site.name,
+            site_code=site.site_code,
+            tenant_name=tenant.name if tenant else "Unknown",
+            devices_count=devices_count
+        ))
+    return result
+
+
+class DeleteSiteResponse(BaseModel):
+    deleted_site: str
+    deleted_devices: int
+    message: str
+
+
+@router.delete("/site/{site_id}", response_model=DeleteSiteResponse)
+def delete_site(site_id: str, db: Session = Depends(get_db)):
+    """Delete a site and all associated devices."""
+    site = db.query(Site).filter(Site.id == site_id).first()
+    if not site:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    site_name = site.name
+
+    # Delete devices for this site
+    devices_count = db.query(Device).filter(Device.site_id == site_id).delete()
+
+    # Delete the site
+    db.delete(site)
+    db.commit()
+
+    return DeleteSiteResponse(
+        deleted_site=site_name,
+        deleted_devices=devices_count,
+        message=f"Successfully deleted site '{site_name}' and {devices_count} devices"
+    )
