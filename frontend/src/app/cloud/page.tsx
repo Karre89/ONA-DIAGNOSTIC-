@@ -130,7 +130,7 @@ export default function CloudDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white">Dashboard Overview</h2>
-              <p className="text-sm text-gray-400">Monitor your global diagnostic imaging network</p>
+              <p className="text-sm text-gray-400">AI-Powered Medical Imaging Network</p>
             </div>
             <div className="flex items-center gap-4">
               <button
@@ -279,23 +279,17 @@ export default function CloudDashboardPage() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-400 text-sm">Sync Success Rate</span>
-                      <span className="text-green-400 text-sm">99.7%</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-ona-primary to-ona-secondary w-[99.7%] rounded-full" />
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 text-sm">Total Scans</span>
+                    <span className="text-white text-sm font-medium">{isLoading ? '-' : stats?.total_scans || 0}</span>
                   </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-400 text-sm">API Uptime</span>
-                      <span className="text-green-400 text-sm">99.99%</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-ona-primary to-ona-secondary w-[99.99%] rounded-full" />
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 text-sm">Active Sites</span>
+                    <span className="text-white text-sm font-medium">{isLoading ? '-' : stats?.total_sites || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 text-sm">Edge Devices</span>
+                    <span className="text-white text-sm font-medium">{isLoading ? '-' : stats?.total_devices || 0}</span>
                   </div>
                 </div>
               </div>

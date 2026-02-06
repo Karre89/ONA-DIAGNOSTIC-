@@ -48,18 +48,25 @@ def verify_device_token(
     authorization: str = Header(...),
     db: Session = Depends(get_db)
 ) -> Device:
+    import logging
+    log = logging.getLogger("ona.device_auth")
+
     if not authorization.startswith("Bearer "):
+        log.warning(f"Device {device_id}: missing Bearer prefix in auth header")
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
     token = authorization.replace("Bearer ", "")
     token_hash = hash_token(token)
 
-    device = db.query(Device).filter(
-        Device.id == device_id,
-        Device.device_token_hash == token_hash
-    ).first()
-
+    # Check if device exists
+    device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
+        log.warning(f"Device {device_id}: not found in database")
+        raise HTTPException(status_code=401, detail="Device not found")
+
+    # Check token match
+    if device.device_token_hash != token_hash:
+        log.warning(f"Device {device_id}: token mismatch. received={token_hash[:16]}... stored={device.device_token_hash[:16]}...")
         raise HTTPException(status_code=401, detail="Invalid device token")
 
     return device

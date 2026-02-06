@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_CLOUD_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_CLOUD_API_URL || 'https://ona-diagnostic-production.up.railway.app';
 
 interface LoginResponse {
   access_token: string;
