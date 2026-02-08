@@ -7,11 +7,14 @@ services:
     restart: unless-stopped
 
     environment:
-      - ONA_DEVICE_ID=${ONA_DEVICE_ID:-ONA-DEV-001}
-      - ONA_SITE_ID=${ONA_SITE_ID:-site-001}
+      - ONA_DEVICE_ID=${ONA_DEVICE_ID}
+      - ONA_SITE_ID=${ONA_SITE_ID}
+      - ONA_TENANT_ID=${ONA_TENANT_ID}
       - ONA_CLOUD_API=${ONA_CLOUD_API:-https://ona-diagnostic-production.up.railway.app/api/v1}
-      - ONA_API_KEY=${ONA_API_KEY:-}
+      - ONA_API_KEY=${ONA_API_KEY}
       - ONA_DEVICE=${ONA_DEVICE:-cpu}
+      - ONA_DICOM_PORT=11112
+      - ONA_UI_PORT=8080
 
     ports:
       - "11112:11112"  # DICOM

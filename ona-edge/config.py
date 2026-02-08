@@ -6,9 +6,16 @@ import os
 import logging
 from pathlib import Path
 
-# Device identification
-DEVICE_ID = os.getenv('ONA_DEVICE_ID', 'ONA-DEV-001')
-SITE_ID = os.getenv('ONA_SITE_ID', 'site-001')
+# Load .env file if it exists
+from dotenv import load_dotenv
+env_path = Path(__file__).parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+
+# Device identification (UUIDs from cloud registration)
+DEVICE_ID = os.getenv('ONA_DEVICE_ID', '')
+SITE_ID = os.getenv('ONA_SITE_ID', '')
+TENANT_ID = os.getenv('ONA_TENANT_ID', '')
 
 # ONA Cloud API
 ONA_CLOUD_API = os.getenv('ONA_CLOUD_API', 'https://ona-diagnostic-production.up.railway.app/api/v1')

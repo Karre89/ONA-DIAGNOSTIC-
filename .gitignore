@@ -59,3 +59,6 @@ htmlcov/
 # Build artifacts
 *.pyc
 *.pyo
+
+# Edge data (scans, models, test files)
+ona-edge/data/

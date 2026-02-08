@@ -40,9 +40,9 @@ def process_scan(scan_id: str, filepath: str, metadata: dict):
         # Add to UI for display
         add_result(result)
 
-        # Queue for cloud sync
+        # Queue for cloud sync (synchronous - writes to SQLite queue)
         sync_service = get_sync_service()
-        asyncio.run(sync_service.queue_result(result))
+        sync_service.queue_result_sync(result)
 
         logger.info(f"Scan complete: {scan_id} | TB: {result['conditions'].get('tb', {}).get('probability', 0)}%")
     else:

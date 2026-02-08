@@ -20,6 +20,7 @@ from config import (
     API_KEY,
     DEVICE_ID,
     SITE_ID,
+    TENANT_ID,
     SYNC_INTERVAL,
     MAX_RETRIES,
     DATA_DIR
@@ -80,13 +81,18 @@ class SyncService:
             headers['Authorization'] = f'Bearer {self.api_key}'
         return headers
 
-    async def queue_result(self, result: Dict):
-        """Add scan result to sync queue"""
+    def queue_result_sync(self, result: Dict):
+        """Add scan result to sync queue (synchronous version for thread safety)"""
         scan_id = result.get('scan_id')
+
+        # Skip if device not registered (no UUIDs)
+        if not TENANT_ID or not DEVICE_ID:
+            logger.warning("Device not registered with cloud. Run: python tools/register_device.py")
+            return
 
         # Prepare payload (de-identified, no images)
         payload = {
-            'tenant_id': SITE_ID,  # Will be mapped on server
+            'tenant_id': TENANT_ID,
             'device_id': DEVICE_ID,
             'study_id': scan_id,
             'modality': 'CXR',
@@ -110,10 +116,13 @@ class SyncService:
                 (scan_id, json.dumps(payload))
             )
             conn.commit()
-            logger.debug(f"Queued scan for sync: {scan_id}")
+            logger.info(f"Queued scan for sync: {scan_id}")
         finally:
             conn.close()
 
+    async def queue_result(self, result: Dict):
+        """Add scan result to sync queue (async version)"""
+        self.queue_result_sync(result)
         # Try immediate sync if online
         if self._online:
             await self.sync_pending()
@@ -188,6 +197,10 @@ class SyncService:
     async def send_heartbeat(self):
         """Send heartbeat to cloud"""
         if not self._online:
+            return
+
+        # Skip if device not registered
+        if not DEVICE_ID or not API_KEY:
             return
 
         try:

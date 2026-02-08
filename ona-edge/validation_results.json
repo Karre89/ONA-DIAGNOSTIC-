@@ -1,0 +1,636 @@
+{
+  "dataset": "C:\\Users\\kayse\\Downloads\\archive\\TB_Chest_Radiography_Database",
+  "model": "TorchXRayVision DenseNet121",
+  "threshold": 0.5,
+  "metrics": {
+    "total_images": 50,
+    "tb_positive": 8,
+    "tb_negative": 42,
+    "threshold": 0.5,
+    "sensitivity": 1.0,
+    "specificity": 0.0,
+    "precision": 0.16,
+    "accuracy": 0.16,
+    "f1_score": 0.2758620689655173,
+    "npv": 0,
+    "auc_roc": 0.8065476190476193,
+    "confusion_matrix": {
+      "tp": 8,
+      "tn": 0,
+      "fp": 42,
+      "fn": 0
+    },
+    "optimal_threshold": 0.63,
+    "optimal_sensitivity": 0.625,
+    "optimal_specificity": 0.8571428571428571,
+    "optimal_confusion_matrix": {
+      "tp": 5,
+      "tn": 36,
+      "fp": 6,
+      "fn": 3
+    }
+  },
+  "total_time_seconds": 11.720432758331299,
+  "results": [
+    {
+      "source": "Normal/Normal-78.png",
+      "label": 0,
+      "tb_score": 0.5871,
+      "top_findings": {
+        "Mass": 0.6316312551498413,
+        "Nodule": 0.6305193901062012,
+        "Fibrosis": 0.625237226486206,
+        "Emphysema": 0.625090479850769,
+        "Pleural_Thickening": 0.5932855606079102
+      }
+    },
+    {
+      "source": "Normal/Normal-2593.png",
+      "label": 0,
+      "tb_score": 0.5969,
+      "top_findings": {
+        "Fracture": 0.6228368878364563,
+        "Infiltration": 0.5969475507736206,
+        "Mass": 0.5754450559616089,
+        "Nodule": 0.5750903487205505,
+        "Pneumothorax": 0.5732302069664001
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-318.png",
+      "label": 1,
+      "tb_score": 0.6317,
+      "top_findings": {
+        "Lung Lesion": 0.6385970711708069,
+        "Mass": 0.6332365274429321,
+        "Infiltration": 0.6317316293716431,
+        "Fibrosis": 0.6315481662750244,
+        "Enlarged Cardiomediastinum": 0.6311860680580139
+      }
+    },
+    {
+      "source": "Normal/Normal-3447.png",
+      "label": 0,
+      "tb_score": 0.6303,
+      "top_findings": {
+        "Infiltration": 0.6302703022956848,
+        "Pneumothorax": 0.548466145992279,
+        "Nodule": 0.5318217277526855,
+        "Fracture": 0.5219507217407227,
+        "Consolidation": 0.521797776222229
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-266.png",
+      "label": 1,
+      "tb_score": 0.6362,
+      "top_findings": {
+        "Fibrosis": 0.6380382776260376,
+        "Lung Opacity": 0.636164665222168,
+        "Mass": 0.6334800720214844,
+        "Infiltration": 0.6303908228874207,
+        "Nodule": 0.6281211376190186
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-400.png",
+      "label": 1,
+      "tb_score": 0.6248,
+      "top_findings": {
+        "Atelectasis": 0.6347255706787109,
+        "Cardiomegaly": 0.6319652199745178,
+        "Effusion": 0.6257202625274658,
+        "Fibrosis": 0.6256047487258911,
+        "Mass": 0.6251062154769897
+      }
+    },
+    {
+      "source": "Normal/Normal-1324.png",
+      "label": 0,
+      "tb_score": 0.6305,
+      "top_findings": {
+        "Infiltration": 0.6304751634597778,
+        "Nodule": 0.6238969564437866,
+        "Fibrosis": 0.6054309606552124,
+        "Emphysema": 0.5834452509880066,
+        "Pleural_Thickening": 0.5801396369934082
+      }
+    },
+    {
+      "source": "Normal/Normal-1140.png",
+      "label": 0,
+      "tb_score": 0.6233,
+      "top_findings": {
+        "Infiltration": 0.6232671141624451,
+        "Fibrosis": 0.6225531101226807,
+        "Nodule": 0.6040627956390381,
+        "Atelectasis": 0.6026642322540283,
+        "Emphysema": 0.5877372622489929
+      }
+    },
+    {
+      "source": "Normal/Normal-2588.png",
+      "label": 0,
+      "tb_score": 0.6112,
+      "top_findings": {
+        "Infiltration": 0.6112462878227234,
+        "Atelectasis": 0.5926451683044434,
+        "Fracture": 0.5821868181228638,
+        "Nodule": 0.5683802366256714,
+        "Fibrosis": 0.5328737497329712
+      }
+    },
+    {
+      "source": "Normal/Normal-1050.png",
+      "label": 0,
+      "tb_score": 0.6233,
+      "top_findings": {
+        "Fibrosis": 0.6262233257293701,
+        "Emphysema": 0.6247105598449707,
+        "Infiltration": 0.6232690215110779,
+        "Pleural_Thickening": 0.6178845763206482,
+        "Nodule": 0.6093360185623169
+      }
+    },
+    {
+      "source": "Normal/Normal-2336.png",
+      "label": 0,
+      "tb_score": 0.5998,
+      "top_findings": {
+        "Cardiomegaly": 0.6390218734741211,
+        "Effusion": 0.6244536638259888,
+        "Infiltration": 0.5998348593711853,
+        "Pleural_Thickening": 0.5563381314277649,
+        "Atelectasis": 0.548917829990387
+      }
+    },
+    {
+      "source": "Normal/Normal-1628.png",
+      "label": 0,
+      "tb_score": 0.6574,
+      "top_findings": {
+        "Effusion": 0.6960328221321106,
+        "Lung Opacity": 0.657402753829956,
+        "Infiltration": 0.6522121429443359,
+        "Pneumonia": 0.6480833888053894,
+        "Atelectasis": 0.6375244855880737
+      }
+    },
+    {
+      "source": "Normal/Normal-1707.png",
+      "label": 0,
+      "tb_score": 0.6241,
+      "top_findings": {
+        "Fracture": 0.6253429651260376,
+        "Pneumonia": 0.6241409778594971,
+        "Pneumothorax": 0.6025694608688354,
+        "Nodule": 0.5984300971031189,
+        "Emphysema": 0.5661384463310242
+      }
+    },
+    {
+      "source": "Normal/Normal-119.png",
+      "label": 0,
+      "tb_score": 0.6234,
+      "top_findings": {
+        "Infiltration": 0.6233751773834229,
+        "Fibrosis": 0.6069037318229675,
+        "Nodule": 0.5630601644515991,
+        "Pleural_Thickening": 0.5435153245925903,
+        "Emphysema": 0.5256904363632202
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-411.png",
+      "label": 1,
+      "tb_score": 0.6555,
+      "top_findings": {
+        "Effusion": 0.6871323585510254,
+        "Mass": 0.6591684222221375,
+        "Lung Opacity": 0.6555361151695251,
+        "Atelectasis": 0.655061662197113,
+        "Lung Lesion": 0.6530057191848755
+      }
+    },
+    {
+      "source": "Normal/Normal-1772.png",
+      "label": 0,
+      "tb_score": 0.6261,
+      "top_findings": {
+        "Infiltration": 0.6261267066001892,
+        "Nodule": 0.5367763638496399,
+        "Fibrosis": 0.5274704098701477,
+        "Fracture": 0.5240595936775208,
+        "Pleural_Thickening": 0.5147810578346252
+      }
+    },
+    {
+      "source": "Normal/Normal-75.png",
+      "label": 0,
+      "tb_score": 0.5484,
+      "top_findings": {
+        "Fibrosis": 0.5958139896392822,
+        "Nodule": 0.5676457285881042,
+        "Cardiomegaly": 0.5501450300216675,
+        "Infiltration": 0.548420786857605,
+        "Emphysema": 0.5409080982208252
+      }
+    },
+    {
+      "source": "Normal/Normal-42.png",
+      "label": 0,
+      "tb_score": 0.5758,
+      "top_findings": {
+        "Fibrosis": 0.6227438449859619,
+        "Nodule": 0.6205940842628479,
+        "Infiltration": 0.5758381485939026,
+        "Emphysema": 0.5664472579956055,
+        "Pneumothorax": 0.5627139806747437
+      }
+    },
+    {
+      "source": "Normal/Normal-916.png",
+      "label": 0,
+      "tb_score": 0.5457,
+      "top_findings": {
+        "Nodule": 0.5630319118499756,
+        "Fracture": 0.5572307109832764,
+        "Infiltration": 0.5456685423851013,
+        "Pneumothorax": 0.5171837210655212,
+        "Emphysema": 0.5152583718299866
+      }
+    },
+    {
+      "source": "Normal/Normal-1738.png",
+      "label": 0,
+      "tb_score": 0.6231,
+      "top_findings": {
+        "Fibrosis": 0.6239701509475708,
+        "Emphysema": 0.6234263777732849,
+        "Infiltration": 0.6230602860450745,
+        "Pleural_Thickening": 0.6021333336830139,
+        "Nodule": 0.5695093274116516
+      }
+    },
+    {
+      "source": "Normal/Normal-2510.png",
+      "label": 0,
+      "tb_score": 0.6231,
+      "top_findings": {
+        "Infiltration": 0.6230603456497192,
+        "Nodule": 0.5642646551132202,
+        "Fracture": 0.5575302243232727,
+        "Atelectasis": 0.5570825338363647,
+        "Fibrosis": 0.5225610136985779
+      }
+    },
+    {
+      "source": "Normal/Normal-951.png",
+      "label": 0,
+      "tb_score": 0.6067,
+      "top_findings": {
+        "Pleural_Thickening": 0.626362681388855,
+        "Emphysema": 0.6226469278335571,
+        "Infiltration": 0.6067138910293579,
+        "Nodule": 0.5814942121505737,
+        "Pneumothorax": 0.5697951316833496
+      }
+    },
+    {
+      "source": "Normal/Normal-200.png",
+      "label": 0,
+      "tb_score": 0.625,
+      "top_findings": {
+        "Infiltration": 0.6250209808349609,
+        "Atelectasis": 0.5809324979782104,
+        "Nodule": 0.5767553448677063,
+        "Fibrosis": 0.5590324997901917,
+        "Fracture": 0.5552119612693787
+      }
+    },
+    {
+      "source": "Normal/Normal-1520.png",
+      "label": 0,
+      "tb_score": 0.5366,
+      "top_findings": {
+        "Pleural_Thickening": 0.6152378916740417,
+        "Emphysema": 0.5618577599525452,
+        "Nodule": 0.5596030950546265,
+        "Infiltration": 0.5365538001060486,
+        "Fracture": 0.5358432531356812
+      }
+    },
+    {
+      "source": "Normal/Normal-1382.png",
+      "label": 0,
+      "tb_score": 0.6157,
+      "top_findings": {
+        "Atelectasis": 0.6384249329566956,
+        "Fibrosis": 0.628093421459198,
+        "Pleural_Thickening": 0.6238653063774109,
+        "Infiltration": 0.6156793832778931,
+        "Mass": 0.6071746945381165
+      }
+    },
+    {
+      "source": "Normal/Normal-64.png",
+      "label": 0,
+      "tb_score": 0.5884,
+      "top_findings": {
+        "Fibrosis": 0.6230149269104004,
+        "Emphysema": 0.6055111885070801,
+        "Infiltration": 0.5884092450141907,
+        "Nodule": 0.5585418343544006,
+        "Pleural_Thickening": 0.5518643856048584
+      }
+    },
+    {
+      "source": "Normal/Normal-363.png",
+      "label": 0,
+      "tb_score": 0.5769,
+      "top_findings": {
+        "Fibrosis": 0.6251991391181946,
+        "Emphysema": 0.6095501780509949,
+        "Nodule": 0.602912962436676,
+        "Infiltration": 0.5768798589706421,
+        "Mass": 0.565971314907074
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-658.png",
+      "label": 1,
+      "tb_score": 0.6795,
+      "top_findings": {
+        "Lung Opacity": 0.6795268058776855,
+        "Mass": 0.6590120792388916,
+        "Infiltration": 0.652265191078186,
+        "Consolidation": 0.6388880610466003,
+        "Enlarged Cardiomediastinum": 0.6382659673690796
+      }
+    },
+    {
+      "source": "Normal/Normal-3011.png",
+      "label": 0,
+      "tb_score": 0.5932,
+      "top_findings": {
+        "Infiltration": 0.5931616425514221,
+        "Emphysema": 0.5641140937805176,
+        "Pneumothorax": 0.5601392388343811,
+        "Nodule": 0.5509592294692993,
+        "Pleural_Thickening": 0.5340486168861389
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-678.png",
+      "label": 1,
+      "tb_score": 0.6477,
+      "top_findings": {
+        "Enlarged Cardiomediastinum": 0.6531107425689697,
+        "Lung Opacity": 0.6477442979812622,
+        "Lung Lesion": 0.647244393825531,
+        "Mass": 0.6431207060813904,
+        "Infiltration": 0.6377912759780884
+      }
+    },
+    {
+      "source": "Normal/Normal-3462.png",
+      "label": 0,
+      "tb_score": 0.6277,
+      "top_findings": {
+        "Infiltration": 0.6276793479919434,
+        "Nodule": 0.5594784021377563,
+        "Fracture": 0.5391166806221008,
+        "Atelectasis": 0.5208263993263245,
+        "Fibrosis": 0.5196526050567627
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-557.png",
+      "label": 1,
+      "tb_score": 0.6245,
+      "top_findings": {
+        "Infiltration": 0.6245293021202087,
+        "Lung Opacity": 0.5657795667648315,
+        "Atelectasis": 0.5550093650817871,
+        "Emphysema": 0.5470068454742432,
+        "Fibrosis": 0.5462664365768433
+      }
+    },
+    {
+      "source": "Normal/Normal-1362.png",
+      "label": 0,
+      "tb_score": 0.6313,
+      "top_findings": {
+        "Infiltration": 0.6313198208808899,
+        "Atelectasis": 0.6090795397758484,
+        "Fibrosis": 0.6089966893196106,
+        "Nodule": 0.5769132971763611,
+        "Fracture": 0.555538535118103
+      }
+    },
+    {
+      "source": "Normal/Normal-2751.png",
+      "label": 0,
+      "tb_score": 0.6238,
+      "top_findings": {
+        "Infiltration": 0.6237525343894958,
+        "Fibrosis": 0.6042352914810181,
+        "Nodule": 0.601860761642456,
+        "Mass": 0.5787259936332703,
+        "Emphysema": 0.5524910092353821
+      }
+    },
+    {
+      "source": "Normal/Normal-1259.png",
+      "label": 0,
+      "tb_score": 0.6255,
+      "top_findings": {
+        "Infiltration": 0.6255033612251282,
+        "Cardiomegaly": 0.6241157054901123,
+        "Fracture": 0.5281422734260559,
+        "Nodule": 0.5227686166763306,
+        "Fibrosis": 0.5151804089546204
+      }
+    },
+    {
+      "source": "Normal/Normal-3494.png",
+      "label": 0,
+      "tb_score": 0.6291,
+      "top_findings": {
+        "Infiltration": 0.6290538311004639,
+        "Fibrosis": 0.625869870185852,
+        "Pleural_Thickening": 0.6229683756828308,
+        "Nodule": 0.6075133681297302,
+        "Fracture": 0.5793858766555786
+      }
+    },
+    {
+      "source": "Normal/Normal-1323.png",
+      "label": 0,
+      "tb_score": 0.5929,
+      "top_findings": {
+        "Nodule": 0.6254335045814514,
+        "Pleural_Thickening": 0.6231951713562012,
+        "Emphysema": 0.6230550408363342,
+        "Pneumonia": 0.592928946018219,
+        "Infiltration": 0.5788779258728027
+      }
+    },
+    {
+      "source": "Normal/Normal-1753.png",
+      "label": 0,
+      "tb_score": 0.6177,
+      "top_findings": {
+        "Infiltration": 0.6176602244377136,
+        "Pneumothorax": 0.615957498550415,
+        "Emphysema": 0.591424822807312,
+        "Fracture": 0.5623568892478943,
+        "Nodule": 0.5485699772834778
+      }
+    },
+    {
+      "source": "Normal/Normal-594.png",
+      "label": 0,
+      "tb_score": 0.5227,
+      "top_findings": {
+        "Emphysema": 0.6228399276733398,
+        "Fracture": 0.604167640209198,
+        "Mass": 0.5657552480697632,
+        "Nodule": 0.5559031367301941,
+        "Pneumothorax": 0.5447991490364075
+      }
+    },
+    {
+      "source": "Normal/Normal-1854.png",
+      "label": 0,
+      "tb_score": 0.6301,
+      "top_findings": {
+        "Infiltration": 0.6301381587982178,
+        "Nodule": 0.5487278699874878,
+        "Fracture": 0.5403501391410828,
+        "Pneumothorax": 0.5281124711036682,
+        "Mass": 0.5215674638748169
+      }
+    },
+    {
+      "source": "Normal/Normal-2761.png",
+      "label": 0,
+      "tb_score": 0.5978,
+      "top_findings": {
+        "Fibrosis": 0.623027503490448,
+        "Emphysema": 0.6035324335098267,
+        "Infiltration": 0.5977796912193298,
+        "Atelectasis": 0.5524508953094482,
+        "Nodule": 0.5485406517982483
+      }
+    },
+    {
+      "source": "Normal/Normal-2032.png",
+      "label": 0,
+      "tb_score": 0.6254,
+      "top_findings": {
+        "Pleural_Thickening": 0.6269791722297668,
+        "Fibrosis": 0.6259901523590088,
+        "Atelectasis": 0.625849187374115,
+        "Infiltration": 0.6253886222839355,
+        "Nodule": 0.6237930655479431
+      }
+    },
+    {
+      "source": "Normal/Normal-3349.png",
+      "label": 0,
+      "tb_score": 0.5435,
+      "top_findings": {
+        "Pleural_Thickening": 0.576861560344696,
+        "Nodule": 0.5713831782341003,
+        "Fibrosis": 0.5602027773857117,
+        "Infiltration": 0.5435129404067993,
+        "Atelectasis": 0.540955662727356
+      }
+    },
+    {
+      "source": "Normal/Normal-647.png",
+      "label": 0,
+      "tb_score": 0.6007,
+      "top_findings": {
+        "Atelectasis": 0.6395737528800964,
+        "Fibrosis": 0.6266624331474304,
+        "Fracture": 0.6237525343894958,
+        "Emphysema": 0.6233080625534058,
+        "Infiltration": 0.6007120013237
+      }
+    },
+    {
+      "source": "Tuberculosis/Tuberculosis-473.png",
+      "label": 1,
+      "tb_score": 0.5848,
+      "top_findings": {
+        "Mass": 0.6236307621002197,
+        "Nodule": 0.6229628920555115,
+        "Pleural_Thickening": 0.6225820183753967,
+        "Fibrosis": 0.6024020314216614,
+        "Emphysema": 0.5936113595962524
+      }
+    },
+    {
+      "source": "Normal/Normal-485.png",
+      "label": 0,
+      "tb_score": 0.6177,
+      "top_findings": {
+        "Infiltration": 0.6176510453224182,
+        "Enlarged Cardiomediastinum": 0.5140125751495361,
+        "Pneumothorax": 0.5117922425270081,
+        "Nodule": 0.5093150734901428,
+        "Consolidation": 0.5076630115509033
+      }
+    },
+    {
+      "source": "Normal/Normal-3432.png",
+      "label": 0,
+      "tb_score": 0.633,
+      "top_findings": {
+        "Pneumonia": 0.6329932808876038,
+        "Nodule": 0.6239843368530273,
+        "Infiltration": 0.6238723993301392,
+        "Fibrosis": 0.6234269738197327,
+        "Atelectasis": 0.6232345700263977
+      }
+    },
+    {
+      "source": "Normal/Normal-217.png",
+      "label": 0,
+      "tb_score": 0.6252,
+      "top_findings": {
+        "Infiltration": 0.6252208352088928,
+        "Emphysema": 0.6137436032295227,
+        "Pneumonia": 0.601315975189209,
+        "Lung Opacity": 0.5620981454849243,
+        "Enlarged Cardiomediastinum": 0.554102897644043
+      }
+    },
+    {
+      "source": "Normal/Normal-1684.png",
+      "label": 0,
+      "tb_score": 0.6225,
+      "top_findings": {
+        "Mass": 0.6349531412124634,
+        "Enlarged Cardiomediastinum": 0.629534900188446,
+        "Pneumothorax": 0.6225804686546326,
+        "Pneumonia": 0.6225017309188843,
+        "Emphysema": 0.6225007772445679
+      }
+    },
+    {
+      "source": "Normal/Normal-928.png",
+      "label": 0,
+      "tb_score": 0.5699,
+      "top_findings": {
+        "Fibrosis": 0.6236059069633484,
+        "Emphysema": 0.6234259009361267,
+        "Nodule": 0.623070240020752,
+        "Atelectasis": 0.6106119751930237,
+        "Fracture": 0.5936803817749023
+      }
+    }
+  ]
+}

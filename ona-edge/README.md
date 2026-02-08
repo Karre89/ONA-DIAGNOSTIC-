@@ -30,19 +30,18 @@ Edge software for ONA Health's AI diagnostic platform. Runs on clinic hardware (
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 2. Register Device with Cloud
 
 ```bash
-cp .env.example .env
-# Edit .env with your device settings
+python tools/register_device.py
 ```
 
-### 3. Add AI Model
+This will:
+- Register your device with ONA Cloud
+- Create `.env` file with credentials
+- Generate unique device token for authentication
 
-Place your trained model in `data/models/`:
-- `tb_detector.pth` - TB detection model
-
-### 4. Run
+### 3. Run
 
 ```bash
 python main.py
@@ -117,15 +116,21 @@ ona-edge/
 
 ## Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| ONA_DEVICE_ID | ONA-DEV-001 | Unique device identifier |
-| ONA_SITE_ID | site-001 | Site/clinic identifier |
-| ONA_CLOUD_API | https://... | ONA Cloud API URL |
-| ONA_API_KEY | | Device authentication token |
-| ONA_DICOM_PORT | 11112 | DICOM listener port |
-| ONA_UI_PORT | 8080 | Web UI port |
-| ONA_DEVICE | cpu | AI device (cpu/cuda) |
+| Variable | Description |
+|----------|-------------|
+| ONA_DEVICE_ID | Unique device UUID (from registration) |
+| ONA_SITE_ID | Site/clinic UUID (from registration) |
+| ONA_TENANT_ID | Tenant UUID (from registration) |
+| ONA_API_KEY | Device authentication token (from registration) |
+| ONA_CLOUD_API | ONA Cloud API URL |
+| ONA_DICOM_PORT | DICOM listener port (default: 11112) |
+| ONA_UI_PORT | Web UI port (default: 8080) |
+| ONA_DEVICE | AI device: cpu or cuda |
+
+## AI Model
+
+Uses **TorchXRayVision** pre-trained model (600K+ real chest X-rays) for TB detection.
+No manual model download required - the model is downloaded automatically on first run.
 
 ## Clinic Installation
 

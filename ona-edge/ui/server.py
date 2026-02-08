@@ -76,8 +76,14 @@ def add_result(result: dict):
 
         current_results[scan_id] = result_copy
 
-        # Notify WebSocket clients
-        asyncio.create_task(broadcast_result(result_copy))
+        # Notify WebSocket clients (handle case where we're not in async context)
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.create_task(broadcast_result(result_copy))
+        except RuntimeError:
+            # No running event loop - we're called from a different thread
+            # The WebSocket clients will get updates on their next request
+            pass
 
 
 async def broadcast_result(result: dict):

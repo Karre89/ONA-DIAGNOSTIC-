@@ -4,17 +4,13 @@ No external data needed - generates a chest X-ray-like image
 """
 
 import numpy as np
-from PIL import Image
-import sys
 from pathlib import Path
-
-# Add parent to path for pydicom
-sys.path.insert(0, str(Path(__file__).parent.parent))
+from datetime import datetime
 
 import pydicom
-from pydicom.dataset import Dataset, FileMetaDataset
-from pydicom.uid import generate_uid, ExplicitVRLittleEndian
-from datetime import datetime
+from pydicom.dataset import Dataset, FileDataset, FileMetaDataset
+from pydicom.uid import generate_uid, ExplicitVRLittleEndian, ComputedRadiographyImageStorage
+import tempfile
 
 
 def create_synthetic_cxr(size=512):
@@ -26,8 +22,8 @@ def create_synthetic_cxr(size=512):
     # Add noise
     img += np.random.normal(0, 10, (size, size))
 
-    # Create coordinate grids
-    y, x = np.ogrid[:size, :size]
+    # Create coordinate grids (meshgrid for proper 2D arrays)
+    y, x = np.mgrid[:size, :size]
     center_y, center_x = size // 2, size // 2
 
     # Add lung fields (darker ellipses)
@@ -63,58 +59,55 @@ def create_synthetic_cxr(size=512):
 
 
 def create_test_dicom(output_path: str, add_abnormality: bool = False):
-    """Create a test DICOM file"""
+    """Create a valid test DICOM file"""
 
     # Generate synthetic image
     pixels = create_synthetic_cxr(512)
 
     if add_abnormality:
         # Add a "lesion" in upper lobe (simulates TB)
-        y, x = np.ogrid[:512, :512]
+        y, x = np.mgrid[:512, :512]
         lesion_y, lesion_x = 150, 200  # Upper left
         lesion_mask = ((x - lesion_x)**2 + (y - lesion_y)**2) < 25**2
-        pixels[lesion_mask] = np.clip(pixels[lesion_mask] + 50, 0, 255)
+        pixels[lesion_mask] = np.clip(pixels[lesion_mask] + 50, 0, 255).astype(np.uint8)
         print("  Added simulated abnormality (upper left)")
 
-    # Create DICOM
+    # Create file meta
     file_meta = FileMetaDataset()
-    file_meta.MediaStorageSOPClassUID = '1.2.840.10008.5.1.4.1.1.1.1'
+    file_meta.MediaStorageSOPClassUID = ComputedRadiographyImageStorage
     file_meta.MediaStorageSOPInstanceUID = generate_uid()
-    file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
     file_meta.ImplementationClassUID = generate_uid()
+    file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
 
-    ds = Dataset()
-    ds.file_meta = file_meta
-    ds.is_little_endian = True
-    ds.is_implicit_VR = False
+    # Create the FileDataset instance
+    ds = FileDataset(output_path, {}, file_meta=file_meta, preamble=b"\0" * 128)
 
-    # Patient
+    # Add required DICOM attributes
     ds.PatientName = "TEST^SYNTHETIC"
     ds.PatientID = "SYNTH001"
     ds.PatientBirthDate = ""
     ds.PatientSex = ""
 
-    # Study
     ds.StudyInstanceUID = generate_uid()
     ds.StudyDate = datetime.now().strftime("%Y%m%d")
     ds.StudyTime = datetime.now().strftime("%H%M%S")
-    ds.StudyDescription = "Synthetic Test Image"
+    ds.StudyDescription = "Synthetic Test"
     ds.AccessionNumber = ""
     ds.ReferringPhysicianName = ""
+    ds.StudyID = "1"
 
-    # Series
     ds.SeriesInstanceUID = generate_uid()
     ds.SeriesNumber = 1
     ds.Modality = "CR"
-    ds.SeriesDescription = "Synthetic Chest X-Ray"
+    ds.SeriesDescription = "Chest X-Ray"
 
-    # Instance
     ds.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
     ds.SOPClassUID = file_meta.MediaStorageSOPClassUID
     ds.InstanceNumber = 1
 
-    # Image
-    ds.Rows, ds.Columns = pixels.shape
+    # Image attributes
+    ds.Rows = pixels.shape[0]
+    ds.Columns = pixels.shape[1]
     ds.BitsAllocated = 8
     ds.BitsStored = 8
     ds.HighBit = 7
@@ -122,12 +115,19 @@ def create_test_dicom(output_path: str, add_abnormality: bool = False):
     ds.SamplesPerPixel = 1
     ds.PhotometricInterpretation = "MONOCHROME2"
     ds.BodyPartExamined = "CHEST"
+
+    # Set pixel data
     ds.PixelData = pixels.tobytes()
 
-    ds.save_as(output_path)
+    # Set encoding
+    ds.is_little_endian = True
+    ds.is_implicit_VR = False
+
+    # Save
+    ds.save_as(output_path, write_like_original=False)
 
     print(f"✓ Created test DICOM: {output_path}")
-    print(f"  Size: 512x512")
+    print(f"  Size: {pixels.shape[1]}x{pixels.shape[0]}")
     print(f"  Type: Synthetic chest X-ray")
 
 

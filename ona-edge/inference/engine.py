@@ -181,10 +181,14 @@ class InferenceEngine:
         start_time = datetime.utcnow()
 
         try:
+            # Determine preprocessing based on model type
+            use_xrv_preprocessing = self._using_xrv
+
             # Preprocess image
             image_tensor, original_image = preprocess_dicom(
                 dicom_path,
-                target_size=(224, 224)
+                target_size=(224, 224),
+                for_xrv=use_xrv_preprocessing
             )
 
             results = {
@@ -312,49 +316,85 @@ class InferenceEngine:
     def _run_xrv_inference(self, model, image_tensor, condition: str) -> tuple:
         """Run inference with TorchXRayVision model"""
         import torch
-        import torchxrayvision as xrv
 
+        # image_tensor should be (1, 224, 224) for XRV
         image_tensor = image_tensor.to(self.device)
 
         with torch.no_grad():
-            output = model(image_tensor.unsqueeze(0))
+            # Add batch dimension: (1, 224, 224) -> (1, 1, 224, 224)
+            if len(image_tensor.shape) == 3:
+                input_tensor = image_tensor.unsqueeze(0)
+            else:
+                input_tensor = image_tensor
 
-            # TorchXRayVision outputs probabilities for many conditions
-            # Map condition names to indices
+            logger.info(f"XRV input shape: {input_tensor.shape}")
+
+            output = model(input_tensor)
+
+            # TorchXRayVision outputs probabilities for 18 conditions
+            # Map condition names to XRV pathology names
             condition_map = {
-                'tb': 'Infiltration',  # TB often shows as infiltration
+                'tb': 'Infiltration',  # TB often shows as infiltration/consolidation
                 'pneumonia': 'Pneumonia',
-                'cardiomegaly': 'Cardiomegaly'
+                'cardiomegaly': 'Cardiomegaly',
+                'consolidation': 'Consolidation',
+                'effusion': 'Effusion'
             }
 
             target_name = condition_map.get(condition, condition)
 
             if hasattr(model, 'pathologies'):
-                idx = model.pathologies.index(target_name) if target_name in model.pathologies else 0
-                probability = torch.sigmoid(output[0, idx]).item()
+                pathologies = list(model.pathologies)
+                logger.info(f"XRV pathologies: {pathologies}")
+
+                if target_name in pathologies:
+                    idx = pathologies.index(target_name)
+                    probability = torch.sigmoid(output[0, idx]).item()
+                else:
+                    # Fallback: use first pathology
+                    probability = torch.sigmoid(output[0, 0]).item()
+
+                # Log all pathology scores for debugging
+                for i, path in enumerate(pathologies[:5]):
+                    score = torch.sigmoid(output[0, i]).item()
+                    logger.debug(f"  {path}: {score:.3f}")
             else:
                 probability = torch.sigmoid(output[0, 0]).item()
 
-        # Generate heatmap
-        heatmap = generate_heatmap(model, image_tensor, target_class=0)
+        # Generate simple heatmap (GradCAM not easily supported for XRV)
+        heatmap = self._generate_simple_heatmap(
+            image_tensor.cpu().numpy() if hasattr(image_tensor, 'numpy') else image_tensor,
+            probability
+        )
 
         return probability, heatmap
 
     def _generate_simple_heatmap(self, image_np: np.ndarray, probability: float) -> np.ndarray:
-        """Generate a simple attention-based heatmap for ONNX models"""
-        # Use image intensity as rough attention (brighter areas = more attention)
+        """Generate a simple attention-based heatmap"""
+        import cv2
+
+        # Handle different tensor shapes
         if len(image_np.shape) == 4:
-            img = image_np[0, 0]  # Take first channel
+            img = image_np[0, 0]  # (batch, channel, H, W) -> (H, W)
         elif len(image_np.shape) == 3:
-            img = image_np[0]
+            img = image_np[0]  # (channel, H, W) -> (H, W)
         else:
             img = image_np
 
         # Normalize to 0-255
-        img = (img - img.min()) / (img.max() - img.min() + 1e-8) * 255
+        img_min, img_max = img.min(), img.max()
+        if img_max - img_min > 0:
+            img = (img - img_min) / (img_max - img_min) * 255
+        else:
+            img = np.zeros_like(img)
+
+        img = img.astype(np.float32)
+
+        # Resize to 224x224 if needed
+        if img.shape[0] != 224 or img.shape[1] != 224:
+            img = cv2.resize(img, (224, 224))
 
         # Apply Gaussian blur to create smooth heatmap
-        import cv2
         heatmap = cv2.GaussianBlur(img.astype(np.uint8), (31, 31), 0)
 
         # Scale by probability

@@ -98,15 +98,47 @@ def batch_convert(input_dir: str, output_dir: str, limit: int = 10):
     print(f"\n✓ Converted {min(limit, len(images))} images to {output_dir}")
 
 
+def send_dicom(dicom_path: str, host: str = '127.0.0.1', port: int = 11112):
+    """Send DICOM to local ONA Edge listener"""
+    from pynetdicom import AE
+    from pydicom import dcmread
+
+    ds = dcmread(dicom_path, force=True)
+    ae = AE(ae_title='TEST_SCU')
+    ae.add_requested_context(ds.SOPClassUID)
+
+    assoc = ae.associate(host, port, ae_title='ONA_EDGE')
+    if assoc.is_established:
+        status = assoc.send_c_store(ds)
+        assoc.release()
+        if status.Status == 0:
+            print(f"[OK] Sent to ONA Edge listener")
+            return True
+        else:
+            print(f"[FAIL] C-STORE failed: {status.Status}")
+    else:
+        print("[FAIL] Could not connect to DICOM listener")
+    return False
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print("Usage:")
-        print("  Single file:  python convert_to_dicom.py input.png output.dcm")
-        print("  Batch:        python convert_to_dicom.py --batch input_dir/ output_dir/ [limit]")
+        print("  Convert:       python convert_to_dicom.py input.png output.dcm")
+        print("  Convert+Send:  python convert_to_dicom.py input.png output.dcm --send")
+        print("  Batch:         python convert_to_dicom.py --batch input_dir/ output_dir/ [limit]")
         sys.exit(1)
 
     if sys.argv[1] == "--batch":
         limit = int(sys.argv[4]) if len(sys.argv) > 4 else 10
         batch_convert(sys.argv[2], sys.argv[3], limit)
     else:
-        png_to_dicom(sys.argv[1], sys.argv[2])
+        send_after = "--send" in sys.argv
+        args = [a for a in sys.argv[1:] if a != "--send"]
+        if len(args) < 2:
+            args.append(args[0].rsplit('.', 1)[0] + '.dcm')
+
+        png_to_dicom(args[0], args[1])
+
+        if send_after:
+            send_dicom(args[1])
