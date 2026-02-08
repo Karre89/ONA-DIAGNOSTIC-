@@ -93,9 +93,9 @@ def upload_result(
     if existing:
         return ResultUploadResponse(result_id=existing.id)
 
-    # Create new result
+    # Create new result - tenant_id from device, not client request (tenant isolation)
     result = InferenceResult(
-        tenant_id=request.tenant_id,
+        tenant_id=device.tenant_id,
         site_id=device.site_id,
         device_id=request.device_id,
         study_id=request.study_id,

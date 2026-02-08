@@ -168,9 +168,10 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @router.get("/dashboard-stats")
 def get_dashboard_stats(
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get dashboard statistics (public for now)"""
+    """Get dashboard statistics"""
 
     # Get total scans
     query = db.query(InferenceResult)
@@ -205,9 +206,10 @@ def get_dashboard_stats(
 
 @router.get("/cloud-stats")
 def get_cloud_stats(
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get cloud admin statistics (public for now)"""
+    """Get cloud admin statistics"""
     from app.models.models import Device
 
     total_tenants = db.query(Tenant).count()
@@ -243,8 +245,8 @@ def get_cloud_stats(
 
 
 @router.get("/sites")
-def get_sites(db: Session = Depends(get_db)):
-    """Get all sites (public for now)"""
+def get_sites(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all sites"""
     from app.models.models import Device
 
     sites = db.query(Site).all()
@@ -264,8 +266,8 @@ def get_sites(db: Session = Depends(get_db)):
 
 
 @router.get("/devices")
-def get_devices(db: Session = Depends(get_db)):
-    """Get all devices (public for now)"""
+def get_devices(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all devices"""
     from app.models.models import Device
 
     devices = db.query(Device).all()

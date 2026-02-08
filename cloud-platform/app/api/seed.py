@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.models import Tenant, Site, Device, ModelVersion, InferenceResult, FeedbackSync
+from app.models.models import Tenant, Site, Device, ModelVersion, InferenceResult, FeedbackSync, User
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/seed", tags=["seed"])
 
@@ -32,7 +33,7 @@ def hash_token(token: str) -> str:
 
 
 @router.post("", response_model=SeedResponse)
-def seed_data(request: SeedRequest, db: Session = Depends(get_db)):
+def seed_data(request: SeedRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Check if tenant already exists
     existing_tenant = db.query(Tenant).filter(Tenant.name == request.tenant_name).first()
 
@@ -124,7 +125,7 @@ class DeleteTenantResponse(BaseModel):
 
 
 @router.delete("/tenant/{tenant_id}", response_model=DeleteTenantResponse)
-def delete_tenant(tenant_id: str, db: Session = Depends(get_db)):
+def delete_tenant(tenant_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete a tenant and all associated data (sites, devices, results, feedback)."""
     # Find tenant
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -171,7 +172,7 @@ class TenantInfo(BaseModel):
 
 
 @router.get("/tenants", response_model=List[TenantInfo])
-def list_tenants(db: Session = Depends(get_db)):
+def list_tenants(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """List all tenants with their site and device counts."""
     tenants = db.query(Tenant).all()
     result = []
@@ -197,7 +198,7 @@ class SiteInfo(BaseModel):
 
 
 @router.get("/sites", response_model=List[SiteInfo])
-def list_sites(db: Session = Depends(get_db)):
+def list_sites(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """List all sites with their device counts."""
     sites = db.query(Site).all()
     result = []
@@ -221,7 +222,7 @@ class DeleteSiteResponse(BaseModel):
 
 
 @router.delete("/site/{site_id}", response_model=DeleteSiteResponse)
-def delete_site(site_id: str, db: Session = Depends(get_db)):
+def delete_site(site_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete a site and all associated devices."""
     site = db.query(Site).filter(Site.id == site_id).first()
     if not site:
