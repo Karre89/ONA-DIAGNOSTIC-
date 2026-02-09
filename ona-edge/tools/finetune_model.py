@@ -134,6 +134,79 @@ class TBClassifier(nn.Module):
         return out
 
 
+class MultiHeadClassifier(nn.Module):
+    """Multi-head DenseNet121 sharing a single backbone.
+    Each head is an independent binary classifier (e.g. TB, Pneumonia).
+    Backbone features (1024-dim) are computed once, then routed to the
+    requested head."""
+
+    SUPPORTED_HEADS = ['tb', 'pneumonia']
+
+    def __init__(self, backbone):
+        super().__init__()
+        self.backbone = backbone
+        self.heads = nn.ModuleDict({
+            'tb': nn.Sequential(
+                nn.Dropout(0.3),
+                nn.Linear(1024, 256),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(256, 1)
+            ),
+            'pneumonia': nn.Sequential(
+                nn.Dropout(0.3),
+                nn.Linear(1024, 256),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(256, 1)
+            ),
+        })
+
+    def forward(self, x, head='tb'):
+        features = self.backbone.features(x)
+        out = nn.functional.adaptive_avg_pool2d(features, (1, 1))
+        out = out.view(out.size(0), -1)
+        return self.heads[head](out)
+
+    def forward_all(self, x):
+        """Run all heads on the same input (single backbone pass)."""
+        features = self.backbone.features(x)
+        out = nn.functional.adaptive_avg_pool2d(features, (1, 1))
+        out = out.view(out.size(0), -1)
+        return {name: head(out) for name, head in self.heads.items()}
+
+
+def migrate_tb_to_multihead(tb_checkpoint_path, device='cpu'):
+    """Load a trained TBClassifier checkpoint and migrate its weights
+    into a MultiHeadClassifier. The TB head is copied exactly;
+    the pneumonia head starts with random weights."""
+    import torchxrayvision as xrv
+
+    logger.info("Creating MultiHeadClassifier from TB checkpoint...")
+    xrv_model = xrv.models.DenseNet(weights="densenet121-res224-all")
+    multihead = MultiHeadClassifier(xrv_model)
+
+    checkpoint = torch.load(tb_checkpoint_path, map_location=device, weights_only=False)
+    best_state = checkpoint.get('best_model_state', checkpoint.get('model_state_dict'))
+
+    # Map TBClassifier weights -> MultiHeadClassifier
+    # TBClassifier: backbone.*, classifier.0-4.*
+    # MultiHeadClassifier: backbone.*, heads.tb.0-4.*
+    new_state = {}
+    for key, value in best_state.items():
+        if key.startswith('classifier.'):
+            new_key = key.replace('classifier.', 'heads.tb.')
+            new_state[new_key] = value
+        else:
+            new_state[key] = value
+
+    multihead.load_state_dict(new_state, strict=False)
+    logger.info("TB head weights migrated successfully")
+    logger.info("Pneumonia head initialized with random weights")
+
+    return multihead
+
+
 def create_model(freeze_backbone: bool = True):
     """Create fine-tuning model from pretrained XRV backbone"""
     import torchxrayvision as xrv

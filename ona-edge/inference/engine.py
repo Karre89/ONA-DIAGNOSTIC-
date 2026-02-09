@@ -54,26 +54,33 @@ class InferenceEngine:
         model_dir = Path(MODEL_DIR)
         model_dir.mkdir(parents=True, exist_ok=True)
 
-        # Priority 1: Look for ONNX models (from Colab training)
-        onnx_patterns = [
-            'ona-cxr-*.onnx',
-            'tb_detector.onnx',
-            'tb_model.onnx',
-            '*.onnx'
-        ]
+        # Priority 0: Look for multi-head model (TB + Pneumonia in one)
+        multihead_path = model_dir / 'ona-multihead-finetuned.pth'
+        if multihead_path.exists() and self._torch_available:
+            if self._load_multihead_model(multihead_path):
+                logger.info(f"Loaded multi-head model: {multihead_path.name}")
 
-        for pattern in onnx_patterns:
-            onnx_files = list(model_dir.glob(pattern))
-            if onnx_files:
-                # Use the most recent one
-                onnx_path = sorted(onnx_files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
-                if self._load_onnx_model(onnx_path):
-                    logger.info(f"Loaded ONNX model: {onnx_path.name}")
-                    break
+        # Priority 1: Look for ONNX models (from Colab training)
+        if 'tb' not in self.models:
+            onnx_patterns = [
+                'ona-cxr-*.onnx',
+                'tb_detector.onnx',
+                'tb_model.onnx',
+                'ona-tb-finetuned.onnx',
+                '*.onnx'
+            ]
+
+            for pattern in onnx_patterns:
+                onnx_files = list(model_dir.glob(pattern))
+                if onnx_files:
+                    onnx_path = sorted(onnx_files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+                    if self._load_onnx_model(onnx_path):
+                        logger.info(f"Loaded ONNX model: {onnx_path.name}")
+                        break
 
         # Priority 2: Look for PyTorch models
         if 'tb' not in self.models and self._torch_available:
-            pth_patterns = ['tb_detector.pth', 'ona_tb_model.pth', 'model.pth', '*.pth']
+            pth_patterns = ['ona-tb-finetuned.pth', 'tb_detector.pth', 'ona_tb_model.pth', 'model.pth']
             for pattern in pth_patterns:
                 pth_files = list(model_dir.glob(pattern))
                 if pth_files:
@@ -104,6 +111,40 @@ class InferenceEngine:
 
         self._initialized = True
         logger.info(f"Inference engine ready with {len(self.models)} models")
+
+    def _load_multihead_model(self, model_path: Path) -> bool:
+        """Load a MultiHeadClassifier model (TB + Pneumonia)"""
+        try:
+            import torch
+            sys.path.insert(0, str(Path(__file__).parent.parent / 'tools'))
+            from finetune_model import MultiHeadClassifier
+
+            import torchxrayvision as xrv
+            xrv_model = xrv.models.DenseNet(weights="densenet121-res224-all")
+            model = MultiHeadClassifier(xrv_model)
+
+            checkpoint = torch.load(model_path, map_location=self.device, weights_only=False)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            model = model.to(self.device)
+            model.eval()
+
+            # Store thresholds from checkpoint metadata
+            self._multihead_thresholds = {}
+            heads_meta = checkpoint.get('heads', {})
+            for head_name, meta in heads_meta.items():
+                self._multihead_thresholds[head_name] = meta.get('optimal_threshold', 0.5)
+
+            # Register for all supported conditions
+            for head_name in model.heads:
+                self.models[head_name] = model
+                self.model_type[head_name] = 'multihead'
+
+            self._using_xrv = True  # uses XRV preprocessing
+            logger.info(f"Multi-head model loaded with heads: {list(model.heads.keys())}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to load multi-head model: {e}")
+            return False
 
     def _load_onnx_model(self, model_path: Path) -> bool:
         """Load an ONNX model"""
@@ -207,7 +248,9 @@ class InferenceEngine:
                     model = self.models[condition]
                     model_type = self.model_type.get(condition, 'unknown')
 
-                    if model_type == 'onnx':
+                    if model_type == 'multihead':
+                        probability, heatmap = self._run_multihead_inference(model, image_tensor, condition)
+                    elif model_type == 'onnx':
                         probability, heatmap = self._run_onnx_inference(model, image_tensor, original_image)
                     elif model_type == 'xrv':
                         probability, heatmap = self._run_xrv_inference(model, image_tensor, condition)
@@ -257,6 +300,28 @@ class InferenceEngine:
                 'success': False,
                 'error': str(e)
             }
+
+    def _run_multihead_inference(self, model, image_tensor, condition: str) -> tuple:
+        """Run inference with MultiHeadClassifier"""
+        import torch
+
+        image_tensor = image_tensor.to(self.device)
+
+        with torch.no_grad():
+            if len(image_tensor.shape) == 3:
+                input_tensor = image_tensor.unsqueeze(0)
+            else:
+                input_tensor = image_tensor
+
+            output = model(input_tensor, head=condition)
+            probability = torch.sigmoid(output).item()
+
+        heatmap = self._generate_simple_heatmap(
+            image_tensor.cpu().numpy() if hasattr(image_tensor, 'numpy') else image_tensor,
+            probability
+        )
+
+        return probability, heatmap
 
     def _run_onnx_inference(self, session, image_tensor, original_image) -> tuple:
         """Run inference with ONNX model"""
