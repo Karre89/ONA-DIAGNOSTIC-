@@ -44,6 +44,10 @@ export default function OrganizationsPage() {
   const [newOrg, setNewOrg] = useState({ name: '', type: 'NGO' })
 
   useEffect(() => {
+    if (!api.isAuthenticated()) {
+      router.push('/')
+      return
+    }
     fetchStats()
   }, [])
 

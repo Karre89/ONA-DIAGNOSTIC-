@@ -41,7 +41,11 @@ export default function CloudDashboardPage() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    // Load user info if available
+    if (!api.isAuthenticated()) {
+      router.push('/')
+      return
+    }
+
     const userStr = localStorage.getItem('user')
     if (userStr) {
       setUser(JSON.parse(userStr))

@@ -49,6 +49,10 @@ export default function SitesPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!api.isAuthenticated()) {
+      router.push('/')
+      return
+    }
     fetchSites()
   }, [])
 

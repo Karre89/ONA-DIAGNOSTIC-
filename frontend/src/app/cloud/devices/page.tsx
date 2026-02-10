@@ -48,6 +48,10 @@ export default function DevicesPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!api.isAuthenticated()) {
+      router.push('/')
+      return
+    }
     fetchDevices()
   }, [])
 

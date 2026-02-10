@@ -72,6 +72,13 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        this.clearToken();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+        throw new Error('Session expired. Redirecting to login...');
+      }
       const error = await response.json().catch(() => ({ detail: 'Request failed' }));
       throw new Error(error.detail || 'Request failed');
     }
