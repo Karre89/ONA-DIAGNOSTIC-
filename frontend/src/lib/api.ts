@@ -193,7 +193,57 @@ class ApiClient {
       last_heartbeat: string | null;
     }>>('/auth/devices');
   }
+
+  // User management endpoints
+  async getUsers(role?: string, isActive?: boolean) {
+    const params = new URLSearchParams();
+    if (role) params.set('role', role);
+    if (isActive !== undefined) params.set('is_active', String(isActive));
+    const qs = params.toString();
+    return this.request<UserInfo[]>(`/auth/users${qs ? `?${qs}` : ''}`);
+  }
+
+  async createUser(data: { email: string; password: string; full_name: string; role: string; tenant_id?: string; site_id?: string }) {
+    return this.request<{ id: string; email: string; message: string }>('/auth/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(userId: string, data: { full_name?: string; role?: string; is_active?: boolean; tenant_id?: string; site_id?: string }) {
+    return this.request<{ id: string; message: string }>(`/auth/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(userId: string) {
+    return this.request<{ message: string }>(`/auth/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+  }
+}
+
+interface UserInfo {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  tenant_name: string | null;
+  site_name: string | null;
+  tenant_id: string | null;
+  site_id: string | null;
+  created_at: string | null;
+  last_login: string | null;
 }
 
 export const api = new ApiClient();
-export type { LoginResponse, DashboardStats, CloudStats };
+export type { LoginResponse, DashboardStats, CloudStats, UserInfo };

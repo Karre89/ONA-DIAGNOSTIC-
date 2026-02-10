@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -284,3 +284,162 @@ def get_devices(current_user: User = Depends(get_current_user), db: Session = De
             "last_heartbeat": device.last_seen_at.isoformat() if device.last_seen_at else None
         })
     return result
+
+
+# --- User Management Endpoints ---
+
+class UserUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    tenant_id: Optional[str] = None
+    site_id: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class CreateUserRequest(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str
+    role: str = "clinic_user"
+    tenant_id: Optional[str] = None
+    site_id: Optional[str] = None
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.get("/users")
+def list_users(
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List all users. Admin only."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    query = db.query(User)
+    if role:
+        query = query.filter(User.role == role)
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+
+    users = query.order_by(User.created_at.desc()).all()
+    result = []
+    for u in users:
+        tenant = db.query(Tenant).filter(Tenant.id == u.tenant_id).first() if u.tenant_id else None
+        site = db.query(Site).filter(Site.id == u.site_id).first() if u.site_id else None
+        result.append({
+            "id": str(u.id),
+            "email": u.email,
+            "full_name": u.full_name,
+            "role": u.role,
+            "is_active": u.is_active,
+            "tenant_name": tenant.name if tenant else None,
+            "site_name": site.name if site else None,
+            "tenant_id": str(u.tenant_id) if u.tenant_id else None,
+            "site_id": str(u.site_id) if u.site_id else None,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "last_login": u.last_login.isoformat() if u.last_login else None,
+        })
+    return result
+
+
+@router.post("/users")
+def create_user(
+    request: CreateUserRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new user. Admin only."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    existing = db.query(User).filter(User.email == request.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user = User(
+        email=request.email,
+        password_hash=hash_password(request.password),
+        full_name=request.full_name,
+        role=request.role,
+        tenant_id=request.tenant_id if request.tenant_id else None,
+        site_id=request.site_id if request.site_id else None,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {"id": str(user.id), "email": user.email, "message": "User created"}
+
+
+@router.put("/users/{user_id}")
+def update_user(
+    user_id: str,
+    request: UserUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a user. Admin only (or self for profile)."""
+    is_self = str(current_user.id) == user_id
+    if current_user.role != "admin" and not is_self:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if request.full_name is not None:
+        user.full_name = request.full_name
+    if request.role is not None and current_user.role == "admin":
+        user.role = request.role
+    if request.tenant_id is not None and current_user.role == "admin":
+        user.tenant_id = request.tenant_id if request.tenant_id else None
+    if request.site_id is not None and current_user.role == "admin":
+        user.site_id = request.site_id if request.site_id else None
+    if request.is_active is not None and current_user.role == "admin":
+        user.is_active = request.is_active
+
+    db.commit()
+    return {"id": str(user.id), "message": "User updated"}
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a user. Admin only. Cannot delete yourself."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    if str(current_user.id) == user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.delete(user)
+    db.commit()
+    return {"message": "User deleted"}
+
+
+@router.post("/change-password")
+def change_password(
+    request: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change own password."""
+    if not verify_password(request.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    current_user.password_hash = hash_password(request.new_password)
+    db.commit()
+    return {"message": "Password changed successfully"}

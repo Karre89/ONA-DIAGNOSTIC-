@@ -28,8 +28,8 @@ const sidebarItems = [
   { icon: Map, label: 'Sites', href: '/cloud/sites' },
   { icon: HardDrive, label: 'Devices', href: '/cloud/devices' },
   { icon: BarChart3, label: 'Analytics', href: '/cloud' },
-  { icon: Users, label: 'Users', href: '/cloud' },
-  { icon: Settings, label: 'Settings', href: '/cloud' },
+  { icon: Users, label: 'Users', href: '/cloud/users' },
+  { icon: Settings, label: 'Settings', href: '/cloud/settings' },
 ]
 
 export default function CloudDashboardPage() {
