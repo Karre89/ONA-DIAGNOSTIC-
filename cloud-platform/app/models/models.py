@@ -1,13 +1,21 @@
 import uuid
+import random
+import string
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Text, Boolean, Integer, Float,
-    DateTime, ForeignKey, JSON, UniqueConstraint
+    DateTime, ForeignKey, JSON, UniqueConstraint, Index
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+
+def generate_referral_code():
+    """Generate a short, verbal-friendly referral code like REF-4719."""
+    digits = ''.join(random.choices(string.digits, k=4))
+    return f"REF-{digits}"
 
 
 class Tenant(Base):
@@ -142,3 +150,58 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
+
+
+class Referral(Base):
+    """SYNARA → ONA referral. Single source of truth for the referral pipeline.
+    Created by SYNARA when triage detects imaging-worthy symptoms.
+    Looked up by clinic nurse via short code. Linked to scan result after imaging."""
+    __tablename__ = "referrals"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    referral_code = Column(Text, unique=True, nullable=False, default=generate_referral_code)
+
+    # Source: SYNARA
+    synara_session_id = Column(Text)  # Links back to SYNARA conversation
+    patient_hash = Column(Text)  # De-identified patient identifier
+    suspected_condition = Column(Text, nullable=False)  # tb, pneumonia, etc.
+    symptoms = Column(JSON)  # Structured symptom list from triage
+    triage_confidence = Column(Float)  # SYNARA's confidence score (0-1)
+    urgency = Column(Text, nullable=False)  # LOW, MEDIUM, HIGH, CRITICAL
+    patient_language = Column(Text)  # ISO code: en, sw, so, etc.
+    patient_demographics = Column(JSON)  # age_range, sex — no PII
+    voice_note_uri = Column(Text)  # Link to cough audio if provided
+    photo_uri = Column(Text)  # Link to eyelid/sputum photo if provided
+
+    # Destination: ONA clinic
+    referred_site_id = Column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=True)
+    referred_at = Column(DateTime, default=datetime.utcnow)
+
+    # Status tracking
+    status = Column(Text, default="pending")
+    # pending → arrived → scanned → completed → no_show
+    arrived_at = Column(DateTime)
+    scanned_at = Column(DateTime)
+    completed_at = Column(DateTime)
+
+    # Link to ONA scan result (populated after imaging)
+    scan_id = Column(UUID(as_uuid=True), nullable=True)
+    ona_result = Column(Text)  # tb_positive, tb_negative, pneumonia_positive, etc.
+    ona_confidence = Column(Float)  # ONA model confidence
+
+    # Follow-up
+    follow_up_sent = Column(Boolean, default=False)
+    follow_up_response = Column(Text)
+
+    # Outcome
+    outcome = Column(Text)  # confirmed, ruled_out, inconclusive
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Indexes for fast lookup
+    __table_args__ = (
+        Index("ix_referral_code", "referral_code"),
+        Index("ix_referral_status", "status"),
+        Index("ix_referral_site", "referred_site_id"),
+    )
