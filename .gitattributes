@@ -1,0 +1,4 @@
+# Git LFS - Model deployment artifacts
+*.onnx filter=lfs diff=lfs merge=lfs -text
+*.onnx.data filter=lfs diff=lfs merge=lfs -text
+ona-edge/data/models/ona-multihead-finetuned.pth filter=lfs diff=lfs merge=lfs -text
