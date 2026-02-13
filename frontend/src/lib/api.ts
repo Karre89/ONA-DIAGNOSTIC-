@@ -161,8 +161,43 @@ class ApiClient {
     return this.request(`/results/recent?limit=${limit}`);
   }
 
-  async getResult(id: string) {
-    return this.request(`/results/${id}`);
+  async getResult(id: string): Promise<ScanResult> {
+    return this.request<ScanResult>(`/results/${id}`);
+  }
+
+  // PDF Reports
+  async downloadReport(scanId: string): Promise<void> {
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    const response = await fetch(`${API_URL}/api/v1/reports/${scanId}/pdf`, { headers });
+    if (!response.ok) throw new Error('Failed to generate report');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ONA-Report-${scanId.slice(0, 8)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  // Referral endpoints
+  async lookupReferral(code: string): Promise<ReferralInfo> {
+    return this.request<ReferralInfo>(`/referrals/lookup/${code}`);
+  }
+
+  async listReferrals(status?: string, limit: number = 50): Promise<ReferralInfo[]> {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    params.set('limit', String(limit));
+    return this.request<ReferralInfo[]>(`/referrals?${params.toString()}`);
+  }
+
+  async getReferralStats(): Promise<ReferralStats> {
+    return this.request<ReferralStats>('/referrals/stats/summary');
   }
 
   // Seed data (for testing)
@@ -245,5 +280,46 @@ interface UserInfo {
   last_login: string | null;
 }
 
+interface ScanResult {
+  id: string;
+  study_id: string;
+  modality: string;
+  model_version: string;
+  risk_bucket: string;
+  scores: Record<string, number>;
+  explanation: string | null;
+  inference_time_ms: number | null;
+  has_burned_in_text: boolean;
+  created_at: string;
+}
+
+interface ReferralInfo {
+  referral_code: string;
+  id: string;
+  suspected_condition: string;
+  symptoms: string[] | null;
+  triage_confidence: number | null;
+  urgency: string;
+  patient_language: string | null;
+  patient_demographics: Record<string, any> | null;
+  status: string;
+  referred_at: string | null;
+  scan_id: string | null;
+  ona_result: string | null;
+  ona_confidence: number | null;
+  outcome: string | null;
+  created_at: string | null;
+}
+
+interface ReferralStats {
+  total: number;
+  pending: number;
+  arrived: number;
+  scanned: number;
+  completed: number;
+  no_show: number;
+  conversion_rate: number;
+}
+
 export const api = new ApiClient();
-export type { LoginResponse, DashboardStats, CloudStats, UserInfo };
+export type { LoginResponse, DashboardStats, CloudStats, UserInfo, ScanResult, ReferralInfo, ReferralStats };

@@ -27,7 +27,7 @@ const sidebarItems = [
   { icon: Building2, label: 'Organizations', href: '/cloud/organizations' },
   { icon: Map, label: 'Sites', href: '/cloud/sites' },
   { icon: HardDrive, label: 'Devices', href: '/cloud/devices' },
-  { icon: BarChart3, label: 'Analytics', href: '/cloud' },
+  { icon: BarChart3, label: 'Analytics', href: '/cloud/analytics' },
   { icon: Users, label: 'Users', href: '/cloud/users' },
   { icon: Settings, label: 'Settings', href: '/cloud/settings' },
 ]

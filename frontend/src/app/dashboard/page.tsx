@@ -230,8 +230,8 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-white">Recent Results</h3>
-              <Link href="#" className="text-ona-primary text-sm hover:underline flex items-center gap-1">
-                View all <ChevronRight className="w-4 h-4" />
+              <Link href="/dashboard/referrals" className="text-ona-primary text-sm hover:underline flex items-center gap-1">
+                Referrals <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
 
@@ -275,8 +275,8 @@ export default function DashboardPage() {
                     .slice(0, 3);
 
                   return (
+                    <Link key={result.id} href={`/dashboard/results/${result.id}`}>
                     <motion.div
-                      key={result.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.5 + index * 0.1 }}
@@ -305,6 +305,7 @@ export default function DashboardPage() {
                         <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-ona-primary transition-colors ml-2" />
                       </div>
                     </motion.div>
+                    </Link>
                   );
                 })
               )}
@@ -326,10 +327,10 @@ export default function DashboardPage() {
                   <Scan className="w-5 h-5" />
                   New Scan
                 </button>
-                <button className="w-full glass p-3 rounded-xl text-gray-300 hover:text-white hover:border-ona-primary/50 transition-all flex items-center justify-center gap-2">
+                <Link href="/dashboard/referrals" className="w-full glass p-3 rounded-xl text-gray-300 hover:text-white hover:border-ona-primary/50 transition-all flex items-center justify-center gap-2">
                   <FileText className="w-5 h-5" />
-                  View Reports
-                </button>
+                  Referrals
+                </Link>
               </div>
             </div>
 
