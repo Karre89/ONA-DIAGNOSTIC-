@@ -11,6 +11,7 @@ import {
   LogOut,
   Map,
   MapPin,
+  Monitor,
   Plus,
   RefreshCw,
   Settings,
@@ -122,7 +123,14 @@ export default function SitesPage() {
           ))}
         </nav>
 
-        <div className="absolute bottom-4 left-4 right-4">
+        <div className="absolute bottom-4 left-4 right-4 space-y-2">
+          <Link
+            href="/dashboard"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-ona-primary hover:bg-ona-primary/10 transition-all"
+          >
+            <Monitor className="w-5 h-5" />
+            {sidebarOpen && <span>Clinic View</span>}
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all"

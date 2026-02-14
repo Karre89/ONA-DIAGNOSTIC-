@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Scan,
   RefreshCw,
+  Shield,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -140,6 +141,17 @@ export default function DashboardPage() {
                 {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
                 {isOnline ? 'Online' : 'Offline'}
               </div>
+
+              {/* Admin Portal (for admin users) */}
+              {user?.role === 'admin' && (
+                <Link
+                  href="/cloud"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </Link>
+              )}
 
               {/* Refresh */}
               <button
